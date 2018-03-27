@@ -13,9 +13,11 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-const googleInfoEndpoint = "https://www.googleapis.com/oauth2/v3/userinfo"
-const uclaDomain = "g.ucla.edu"
-const tokenSub = "google oauth"
+const (
+	googleInfoEndpoint = "https://www.googleapis.com/oauth2/v3/userinfo"
+	uclaDomain         = "g.ucla.edu"
+	tokenSub           = "google oauth"
+)
 
 var (
 	// ErrGoogleInvalidState is returned when state token is invalid

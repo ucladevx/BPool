@@ -1,6 +1,7 @@
 package postgres
 
-const userCreateTable = `
+const (
+	userCreateTable = `
 CREATE TABLE IF NOT EXISTS users (
     id serial primary key,
     name varchar(128) NOT NULL,
@@ -11,10 +12,11 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE ("email")
 );`
 
-const userGetAllSQL = "SELECT * FROM users WHERE id >= $1 LIMIT $2"
+	userGetAllSQL = "SELECT * FROM users WHERE id >= $1 LIMIT $2"
 
-const userGetByIDSQL = "SELECT * FROM users WHERE id=$1"
+	userGetByIDSQL = "SELECT * FROM users WHERE id=$1"
 
-const userGetByEmailSQL = "SELECT * FROM users WHERE email=$1"
+	userGetByEmailSQL = "SELECT * FROM users WHERE email=$1"
 
-const userInsertSQL = "INSERT INTO uses (name, email, image) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at"
+	userInsertSQL = "INSERT INTO uses (name, email, image) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at"
+)

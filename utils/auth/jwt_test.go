@@ -54,7 +54,7 @@ func TestTokenizerNewToken(t *testing.T) {
 	}
 }
 
-func TestTokenizerVaidate(t *testing.T) {
+func TestTokenizerValidate(t *testing.T) {
 	mockLogger := mocks.Logger{}
 	tokenizer := auth.NewTokenizer("secret", "test", 1, mockLogger)
 
