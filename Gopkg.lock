@@ -26,24 +26,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/gorilla/context"
-  packages = ["."]
-  revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
-  version = "v1.1"
-
-[[projects]]
-  name = "github.com/gorilla/securecookie"
-  packages = ["."]
-  revision = "e59506cc896acb7f7bf732d4fdf5e25f7ccd8983"
-  version = "v1.1.1"
-
-[[projects]]
-  name = "github.com/gorilla/sessions"
-  packages = ["."]
-  revision = "ca9ada44574153444b00d3fd9c8559e4cc95f896"
-  version = "v1.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/jmoiron/sqlx"
   packages = [".","reflectx"]
@@ -84,6 +66,12 @@
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/ucladevx/BPool"
+  packages = [".","adapters/http","mocks","models","utils/auth"]
+  revision = "9dc1124c090bf08809f0dbf6751d256192372923"
 
 [[projects]]
   branch = "master"
@@ -148,6 +136,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "129f91f8d866ae3f7ada3d09d9206cb6e86eb1e0a81b8572c9d3fed3e035cc49"
+  inputs-digest = "165843ea5a4335e053e917680d915f02a9b0993eb8a18a1959241aecf84f2424"
   solver-name = "gps-cdcl"
   solver-version = 1
