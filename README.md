@@ -2,6 +2,10 @@
 
 ### Ride sharing made easy for UCLA
 
+## Application Wiki
+https://github.com/ucladevx/BPool/wiki
+
+
 ## Dependencies
 
 1. Golang 1.9 or higher

@@ -9,8 +9,8 @@ type Logger struct {
 	auth.Logger
 }
 
-func (l Logger) Debug(args ...interface{}) {}
-func (l Logger) Error(args ...interface{}) {}
-func (l Logger) Info(args ...interface{})  {}
-func (l Logger) Warn(args ...interface{})  {}
-func (l Logger) Panic(args ...interface{}) {}
+func (l Logger) Debug(msg string, args ...interface{}) {}
+func (l Logger) Error(msg string, args ...interface{}) {}
+func (l Logger) Info(msg string, args ...interface{})  {}
+func (l Logger) Warn(msg string, args ...interface{})  {}
+func (l Logger) Panic(msg string, args ...interface{}) {}

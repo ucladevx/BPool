@@ -20,11 +20,11 @@ var (
 type (
 	// Logger application logger
 	Logger interface {
-		Debug(args ...interface{})
-		Error(args ...interface{})
-		Info(args ...interface{})
-		Warn(args ...interface{})
-		Panic(args ...interface{})
+		Debug(msg string, args ...interface{})
+		Error(msg string, args ...interface{})
+		Info(msg string, args ...interface{})
+		Warn(msg string, args ...interface{})
+		Panic(msg string, args ...interface{})
 	}
 
 	//Tokenizer creates/parses JWT tokens
