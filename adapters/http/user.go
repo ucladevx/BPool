@@ -5,12 +5,15 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/ucladevx/BPool/interfaces"
+	"github.com/ucladevx/BPool/models"
 )
 
 type (
 	// UserService is used to handle the user use cases
 	UserService interface {
-		Login(string) (string, error)
+		Login(googleToken string) (string, error)
+		Get(id string) (*models.User, error)
 	}
 
 	authCookieInfo struct {
@@ -18,9 +21,9 @@ type (
 		cookieName   string
 	}
 
-	// User http adapter
-	User struct {
-		logger     Logger
+	// UserController http adapter
+	UserController struct {
+		logger     interfaces.Logger
 		service    UserService
 		authCookie authCookieInfo
 	}
@@ -31,10 +34,10 @@ type (
 )
 
 // NewUserController creates a new auth controller
-func NewUserController(u UserService, daysTokenValidFor int, cookieName string, l Logger) *User {
+func NewUserController(u UserService, daysTokenValidFor int, cookieName string, l interfaces.Logger) *UserController {
 	a := authCookieInfo{daysTokenValidFor, cookieName}
 
-	return &User{
+	return &UserController{
 		logger:     l,
 		service:    u,
 		authCookie: a,
@@ -42,11 +45,12 @@ func NewUserController(u UserService, daysTokenValidFor int, cookieName string, 
 }
 
 // MountRoutes mounts the auth routes
-func (u *User) MountRoutes(c *echo.Group) {
+func (u *UserController) MountRoutes(c *echo.Group) {
+	c.GET("/users/:id", u.show)
 	c.POST("/login", u.login)
 }
 
-func (u *User) login(c echo.Context) error {
+func (u *UserController) login(c echo.Context) error {
 	var data userLoginRequest
 	if err := c.Bind(&data); err != nil {
 		echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -69,5 +73,28 @@ func (u *User) login(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"data": token,
+	})
+}
+
+func (u *UserController) show(c echo.Context) error {
+	id := c.Param("id")
+
+	if id == "@me" {
+		userClaims := userClaimsFromContext(c)
+		if userClaims == nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "user is not logged in")
+		}
+
+		id = userClaims.ID
+	}
+
+	user, err := u.service.Get(id)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"data": user,
 	})
 }

@@ -52,7 +52,7 @@ func Start() {
 	tokenizer := auth.NewTokenizer(
 		conf.Get("jwt.secret"),
 		conf.Get("jwt.issuer"),
-		int(conf.GetInt("jwt.num_day_valid")),
+		int(conf.GetInt("jwt.num_days_valid")),
 		logger,
 	)
 
@@ -82,6 +82,7 @@ func Start() {
 	app.Use(middleware.Gzip())
 	app.Use(middleware.Secure())
 	app.Use(middleware.Recover())
+	app.Use(auth.NewJWTmiddleware(tokenizer, conf.Get("jwt.cookie"), logger))
 
 	fmt.Println(logo)
 
@@ -99,11 +100,17 @@ func Start() {
 func handleError(l *Logger) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
 		code := 500
+		message := err.Error()
+
 		if he, ok := err.(*echo.HTTPError); ok {
 			code = he.Code
+			switch v := he.Message.(type) {
+			case string:
+				message = v
+			}
 		}
-
-		e := c.JSON(code, echo.Map{"error": err.Error(), "request_id": c.Request().Header.Get(echo.HeaderXRequestID)})
+		requestID := c.Response().Header().Get(echo.HeaderXRequestID)
+		e := c.JSON(code, echo.Map{"error": message, "request_id": requestID})
 
 		if e != nil {
 			l.Error("Handling Error, something really went wrong ", "error", err.Error())

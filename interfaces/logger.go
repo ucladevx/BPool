@@ -1,5 +1,6 @@
-package http
+package interfaces
 
+// Logger is the logger used in the app
 type Logger interface {
 	Debug(msg string, args ...interface{})
 	Error(msg string, args ...interface{})

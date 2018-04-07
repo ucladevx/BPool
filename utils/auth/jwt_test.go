@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -134,24 +135,34 @@ func TestJWTmiddleware(t *testing.T) {
 	}
 	f := auth.NewJWTmiddleware(tokenizer, "auth", mockLogger)(h)
 
+	encodedUser := auth.UserClaims{
+		ID:        "abcdefg",
+		Email:     "test@gmail.com",
+		AuthLevel: 0,
+	}
+
 	tables := []struct {
 		name       string
 		token      string
+		checkUser  bool
 		statusCode int
 	}{
 		{
 			"valid token provided",
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIyNTMxODM5MjU3MjQyIiwiaXNzIjoidGVzdCJ9.2u-gsK6KSMP9pmrCIz44c-VzfPUqxqqWBi26oJEG27Q",
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIyNTMxODM5MjU3MjQyIiwiaXNzIjoidGVzdCIsImlkIjoiYWJjZGVmZyIsImVtYWlsIjoidGVzdEBnbWFpbC5jb20iLCJhdXRoX2xldmVsIjowfQ.Izzlxf3zdPTIRMm2UF0PwC2lLCYUkF3kPwwJwQJMT-U",
+			true,
 			http.StatusOK,
 		},
 		{
 			"no token provided",
 			"",
-			http.StatusUnauthorized,
+			false,
+			http.StatusOK,
 		},
 		{
 			"expired token provided",
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjIwNDE1ODQsImlzcyI6InRlc3QifQ.fL8T4Yf2ZzNzbEils9WbfRfU6dsRrul_b_qY5ln-Kr4",
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjIwNDE1ODQsImlzcyI6InRlc3QiLCJpZCI6ImFiY2RlZGZnIiwiZW1haWwiOiJ0ZXN0QGdtYWlsLmNvbSIsImF1dGhfbGV2ZWwiOjB9.rzgIK61wECrtK6V-5fZUOs2-FWE8t4KE2HKG1BbENhk",
+			false,
 			http.StatusUnauthorized,
 		},
 	}
@@ -181,6 +192,17 @@ func TestJWTmiddleware(t *testing.T) {
 
 		if res.Code != tt.statusCode {
 			t.Errorf("if %s should have responded with %d, instead responded %d", tt.name, tt.statusCode, res.Code)
+		}
+
+		if tt.checkUser {
+			user, ok := c.Get("user").(auth.UserClaims)
+			if !ok {
+				t.Errorf("%s should have added a user to the context but did not", tt.name)
+			}
+
+			if !reflect.DeepEqual(user, encodedUser) {
+				t.Errorf("%s should have same user as the encoded user, %v, but was %v", tt.name, encodedUser, user)
+			}
 		}
 	}
 }

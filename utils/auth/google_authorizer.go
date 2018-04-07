@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/ucladevx/BPool/interfaces"
 )
 
 const (
@@ -38,9 +40,16 @@ type (
 
 	// GoogleAuthorizer allows for google oAuth
 	GoogleAuthorizer struct {
-		logger Logger
+		logger interfaces.Logger
 	}
 )
+
+// NewGoogleAuthorizer creates an authorizer for google oAuth
+func NewGoogleAuthorizer(l interfaces.Logger) *GoogleAuthorizer {
+	return &GoogleAuthorizer{
+		logger: l,
+	}
+}
 
 // UserLogin is used to verify a token and parse the token from google
 func (a *GoogleAuthorizer) UserLogin(token string) (*GoogleUser, error) {
@@ -82,11 +91,4 @@ func (a *GoogleAuthorizer) UserLogin(token string) (*GoogleUser, error) {
 	}
 
 	return &user, nil
-}
-
-// NewGoogleAuthorizer creates an authorizer for google oAuth
-func NewGoogleAuthorizer(l Logger) *GoogleAuthorizer {
-	return &GoogleAuthorizer{
-		logger: l,
-	}
 }

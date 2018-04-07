@@ -67,7 +67,7 @@ func TestUserLogin(t *testing.T) {
 			"error_description": "Invalid Value",
 		})
 	user, err = authorizer.UserLogin(newToken)
-	t.Log(user)
+
 	if err == nil {
 		t.Errorf("With invalid response, there should have been an error and no user, but got none")
 	}
