@@ -49,12 +49,14 @@ func (u *UserService) Login(token string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var user *models.User
-	user, err = u.store.GetByEmail(googleUser.Email)
+
+	// check if user exists
+	user, err := u.store.GetByEmail(googleUser.Email)
 	if err != nil && err != postgres.ErrNoUserFound {
 		return "", err
 	}
 
+	// first time we are seeing user
 	if user == nil {
 		user = &models.User{
 			FirstName:    googleUser.FirstName,
@@ -69,6 +71,7 @@ func (u *UserService) Login(token string) (string, error) {
 		}
 	}
 
+	// generate our own access_token
 	claims := map[string]interface{}{
 		"id":         user.ID,
 		"email":      user.Email,

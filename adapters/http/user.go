@@ -87,7 +87,7 @@ func (u *UserController) list(c echo.Context) error {
 	limit, err := strconv.Atoi(limitStr)
 
 	if limitStr == "" {
-		limit = 10
+		limit = 15
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "limit must be an integer greater than 0")
 	}
