@@ -14,8 +14,8 @@ type UserClaims struct {
 	AuthLevel int
 }
 
-// NewAuthmiddleWare enforces auth on routes
-func NewAuthmiddleWare(LowestAuthLevelRequired int, l interfaces.Logger) echo.MiddlewareFunc {
+// NewAuthmiddleware enforces auth on routes
+func NewAuthMiddleware(LowestAuthLevelRequired int, l interfaces.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := userFromContext(c)

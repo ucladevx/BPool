@@ -25,7 +25,7 @@ type (
 
 	// UserStore any store that allows for users to be persisted
 	UserStore interface {
-		GetAll(limit, offset int) ([]*models.User, error)
+		GetAll(lastID string, limit int) ([]*models.User, error)
 		GetByID(id string) (*models.User, error)
 		GetByEmail(email string) (*models.User, error)
 		Insert(user *models.User) error
@@ -88,4 +88,17 @@ func (u *UserService) Login(token string) (string, error) {
 // Get returns a user by ID
 func (u *UserService) Get(id string) (*models.User, error) {
 	return u.store.GetByID(id)
+}
+
+// GetAll returns a page of users
+func (u *UserService) GetAll(lastID string, limit, userAuthLevel int) ([]*models.User, error) {
+	if userAuthLevel < AdminLevel {
+		return nil, ErrNotAllowed
+	}
+
+	if limit <= 0 || limit > 100 {
+		limit = 15
+	}
+
+	return u.store.GetAll(lastID, limit)
 }

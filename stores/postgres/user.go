@@ -33,11 +33,11 @@ func NewUserStore(db *sqlx.DB) *UserStore {
 	}
 }
 
-// GetAll returns paginated list of users
-func (u *UserStore) GetAll(limit, offset int) ([]*models.User, error) {
+// GetAll returns paginated list of users, lastID = '' for no offset
+func (u *UserStore) GetAll(lastID string, limit int) ([]*models.User, error) {
 	users := []*models.User{}
 
-	if err := u.db.Get(&users, userGetAllSQL, offset, limit); err != nil {
+	if err := u.db.Select(&users, userGetAllSQL, lastID, limit); err != nil {
 		return nil, err
 	}
 

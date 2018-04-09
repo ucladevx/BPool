@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE ("email")
 );`
 
-	userGetAllSQL = "SELECT * FROM users WHERE id >= $1 LIMIT $2"
+	userGetAllSQL = "SELECT * FROM users WHERE id > $1 LIMIT $2"
 
 	userGetByIDSQL = "SELECT * FROM users WHERE id=$1"
 
