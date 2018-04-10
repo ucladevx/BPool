@@ -7,124 +7,88 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"github.com/ucladevx/BPool/interfaces"
 )
 
 const (
-	googleInfoEndpoint = "https://www.googleapis.com/oauth2/v3/userinfo"
+	googleInfoEndpoint = "https://www.googleapis.com/oauth2/v3/tokeninfo?id_token="
 	uclaDomain         = "g.ucla.edu"
-	tokenSub           = "google oauth"
 )
 
 var (
-	// ErrGoogleInvalidState is returned when state token is invalid
-	ErrGoogleInvalidState = errors.New("invalid state token")
+	// ErrGoogleInvalidToken is returned when google token is invalid
+	ErrGoogleInvalidToken = errors.New("the token was invalid")
+	// ErrGoogleError is returned when there is a problem verifiying the token from google
+	ErrGoogleError = errors.New("problem verifying the token from google")
+	// ErrUserParseError is returned when google sends a JSON object that is unparsable
+	ErrUserParseError = errors.New("could not parse the user")
+	// ErrWrongHostedDomain occurs when user's hd is not UCLA
+	ErrWrongHostedDomain = errors.New("user is not part of UCLA")
 )
 
 type (
 	// GoogleUser is the information provided from google
 	GoogleUser struct {
-		Sub          string `json:"sub"`
-		FullName     string `json:"name"`
-		FirstName    string `json:"given_name"`
-		LastName     string `json:"family_name"`
-		Picture      string `json:"picture"`
-		Email        string `json:"email"`
-		EmailVerifed bool   `json:"email_verified"`
+		Sub       string `json:"sub"`
+		HD        string `json:"hd"`
+		Email     string `json:"email"`
+		FullName  string `json:"name"`
+		FirstName string `json:"given_name"`
+		LastName  string `json:"family_name"`
+		Picture   string `json:"picture"`
 	}
 
 	// GoogleAuthorizer allows for google oAuth
 	GoogleAuthorizer struct {
-		oAuthConfig *oauth2.Config
-		tokenizer   *Tokenizer
-		logger      Logger
+		logger interfaces.Logger
 	}
 )
 
-// NewUserLogin generates a unique url for user login
-func (a *GoogleAuthorizer) NewUserLogin(c echo.Context) error {
-	state := uuid.NewV4().String()
-
-	expiry := time.Now().Add(10 * time.Minute)
-
-	// add additional info here if we want something like a specific redirect
-	stateToken, err := a.tokenizer.NewToken(map[string]interface{}{
-		"sub": tokenSub,
-		"exp": expiry,
-	})
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"error": err.Error(),
-		})
+// NewGoogleAuthorizer creates an authorizer for google oAuth
+func NewGoogleAuthorizer(l interfaces.Logger) *GoogleAuthorizer {
+	return &GoogleAuthorizer{
+		logger: l,
 	}
-
-	// TODO: make these changeable
-	cookie := &http.Cookie{
-		Name:     state,
-		Value:    stateToken,
-		Expires:  expiry,
-		HttpOnly: true,
-	}
-
-	c.SetCookie(cookie)
-
-	url := a.oAuthConfig.AuthCodeURL(
-		state,
-		oauth2.AccessTypeOnline,
-		oauth2.SetAuthURLParam("hd", uclaDomain),
-	)
-
-	return c.Redirect(http.StatusFound, url)
 }
 
-// GetUserFromCode gets user info from google given oauth code
-func (a *GoogleAuthorizer) GetUserFromCode(code, state, stateToken string) (*GoogleUser, error) {
-	claims, err := a.tokenizer.Validate(stateToken)
+// UserLogin is used to verify a token and parse the token from google
+func (a *GoogleAuthorizer) UserLogin(token string) (*GoogleUser, error) {
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	url := googleInfoEndpoint + token
+
+	resp, err := client.Get(url)
 	if err != nil {
-		return nil, err
+		a.logger.Error("GoogleAuthorizer.UserLogin - HTTP error", "error", err.Error())
+		return nil, ErrGoogleError
 	}
 
-	if claims["sub"] != tokenSub {
-		return nil, ErrGoogleInvalidState
-	}
-
-	token, err := a.oAuthConfig.Exchange(oauth2.NoContext, code)
-	if err != nil {
-		return nil, err
-	}
-
-	client := a.oAuthConfig.Client(oauth2.NoContext, token)
-
-	resp, err := client.Get(googleInfoEndpoint)
+	// marshal the JSON user into a google user
 	contents, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		a.logger.Error("GoogleAuthorizer.UserLogin - response error",
+			"error", string(contents),
+		)
+		return nil, ErrGoogleError
+	}
+
 	var user GoogleUser
 	if err = json.Unmarshal(contents, &user); err != nil {
-		return nil, err
+		a.logger.Error("GoogleAuthorizer.UserLogin - parse err",
+			"error", err.Error(),
+			"response", string(contents),
+		)
+
+		return nil, ErrUserParseError
+	}
+
+	if user.HD != uclaDomain {
+		return nil, ErrWrongHostedDomain
 	}
 
 	return &user, nil
-}
-
-// NewGoogleAuthorizer creates an authorizer for google oAuth
-func NewGoogleAuthorizer(cID, cSecret, redirectURL, secret string, l Logger) *GoogleAuthorizer {
-	client := &oauth2.Config{
-		ClientID:     cID,
-		ClientSecret: cSecret,
-		RedirectURL:  redirectURL,
-		Scopes:       []string{"email", "profile"},
-		Endpoint:     google.Endpoint,
-	}
-
-	t := NewTokenizer(secret, "bpool", 0, l)
-
-	return &GoogleAuthorizer{
-		oAuthConfig: client,
-		tokenizer:   t,
-		logger:      l,
-	}
 }

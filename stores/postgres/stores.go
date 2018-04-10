@@ -1,5 +1,7 @@
 package postgres
 
+type IDgen = func() string
+
 // Store is a postgres store
 type Store interface {
 	migrate()
