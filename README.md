@@ -1,5 +1,10 @@
-# BPool
-Ride sharing made easy for UCLA
+![BPool](https://i.imgur.com/NZzf9il.png)
+
+### Ride sharing made easy for UCLA
+
+## Application Wiki
+https://github.com/ucladevx/BPool/wiki
+
 
 ## Dependencies
 

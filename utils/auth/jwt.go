@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/ucladevx/BPool/interfaces"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -18,15 +19,6 @@ var (
 )
 
 type (
-	// Logger application logger
-	Logger interface {
-		Debug(args ...interface{})
-		Error(args ...interface{})
-		Info(args ...interface{})
-		Warn(args ...interface{})
-		Panic(args ...interface{})
-	}
-
 	//Tokenizer creates/parses JWT tokens
 	Tokenizer struct {
 		secret    []byte
@@ -34,12 +26,12 @@ type (
 		issuer    string
 		daysValid int
 		parser    *jwt.Parser
-		logger    Logger
+		logger    interfaces.Logger
 	}
 )
 
 // NewTokenizer creates a tokenizer to create/parse JWT tokens
-func NewTokenizer(secret, issuer string, daysValid int, l Logger) *Tokenizer {
+func NewTokenizer(secret, issuer string, daysValid int, l interfaces.Logger) *Tokenizer {
 	return &Tokenizer{
 		secret:    []byte(secret),
 		issuer:    issuer,
@@ -49,13 +41,17 @@ func NewTokenizer(secret, issuer string, daysValid int, l Logger) *Tokenizer {
 	}
 }
 
-// NewJWTmiddleware is an auth middleware to check JWT tokens
-func NewJWTmiddleware(t *Tokenizer, cookie string, l Logger) echo.MiddlewareFunc {
+// NewJWTmiddleware is an auth middleware to check JWT tokens and put its claims on the context
+func NewJWTmiddleware(t *Tokenizer, cookie string, l interfaces.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			token, err := c.Cookie(cookie)
 			if err != nil {
-				l.Info("JWT Middleware - no token", "error", err.Error())
+				if err == http.ErrNoCookie {
+					return next(c)
+				}
+
+				l.Info("JWT Middleware - token error", "error", err.Error())
 				return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
 			}
 
@@ -66,7 +62,14 @@ func NewJWTmiddleware(t *Tokenizer, cookie string, l Logger) echo.MiddlewareFunc
 				return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
 			}
 
-			c.Set("user", claims)
+			user := UserClaims{
+				ID:        claims["id"].(string),
+				Email:     claims["email"].(string),
+				AuthLevel: int(claims["auth_level"].(float64)),
+			}
+
+			c.Set("claims", claims)
+			c.Set("user", user)
 
 			return next(c)
 		}

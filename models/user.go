@@ -7,14 +7,16 @@ import (
 
 // User model instance
 type User struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Image     string    `json:"image"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID           string    `json:"id"`
+	FirstName    string    `json:"first_name" db:"first_name"`
+	LastName     string    `json:"last_name" db:"last_name"`
+	Email        string    `json:"email"`
+	ProfileImage string    `json:"profile_image" db:"profile_image"`
+	AuthLevel    int       `json:"auth_level" db:"auth_level"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 func (u *User) String() string {
-	return fmt.Sprintf("<User name:%s id:%d email:%s>", u.Name, u.ID, u.Email)
+	return fmt.Sprintf("<User name:%s id:%s email:%s auth_level:%d>", u.FirstName+" "+u.LastName, u.ID, u.Email, u.AuthLevel)
 }
