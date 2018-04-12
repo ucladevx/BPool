@@ -81,12 +81,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/ucladevx/BPool"
-  packages = [".","adapters/http","mocks","models","utils/auth"]
-  revision = "9dc1124c090bf08809f0dbf6751d256192372923"
-
-[[projects]]
-  branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
   revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
@@ -136,6 +130,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb1d975547d1df457bc822cd3ba6a0bed219da3d861c1f0fe70af3eb8bd9d997"
+  inputs-digest = "aab07a15edeafd5ffc15f56e259ae5cfe6fc23d96987d114b6857124227cc400"
   solver-name = "gps-cdcl"
   solver-version = 1
