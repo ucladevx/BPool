@@ -6,7 +6,7 @@ import (
 
 // Car model instance
 type Car struct {
-	ID        int       `json:"id"`
+	ID        string    `json:"id"`
 	Make      string    `json:"make"`
 	Model     string    `json:"model"`
 	Year      string    `json:"year"`
