@@ -9,9 +9,9 @@ import (
 
 const (
 	// UserLevel is the auth level associated with standard users
-	UserLevel = iota
+	UserLevel = 0
 	// AdminLevel is the auth level associated with admin users
-	AdminLevel = iota
+	AdminLevel = 300
 )
 
 type (
@@ -33,7 +33,9 @@ type (
 )
 
 // NewUserService creates a new user service
-func NewUserService(store UserStore, a *auth.GoogleAuthorizer, t *auth.Tokenizer, l interfaces.Logger) *UserService {
+func NewUserService(store UserStore, t *auth.Tokenizer, l interfaces.Logger) *UserService {
+	a := auth.NewGoogleAuthorizer(l)
+
 	return &UserService{
 		store:      store,
 		logger:     l,
