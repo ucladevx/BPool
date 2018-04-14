@@ -61,7 +61,7 @@ func (u *UserStore) Insert(user *models.User) error {
 
 	if err := row.Scan(&user.AuthLevel, &user.CreatedAt, &user.UpdatedAt); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok {
-			if pgErr.Code == "23505" {
+			if pgErr.Code.Name() == "unique_violation" {
 				return ErrUserAlreadyExists
 			}
 		}

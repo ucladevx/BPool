@@ -16,7 +16,7 @@ import (
 )
 
 const logo = `
-________  ________  ________  ________  ___          
+ ________  ________  ________  ________  ___          
 |\   __  \|\   __  \|\   __  \|\   __  \|\  \         
 \ \  \|\ /\ \  \|\  \ \  \|\  \ \  \|\  \ \  \        
  \ \   __  \ \   ____\ \  \\\  \ \  \\\  \ \  \       
@@ -24,7 +24,10 @@ ________  ________  ________  ________  ___
    \ \_______\ \__\    \ \_______\ \_______\ \_______\
     \|_______|\|__|     \|_______|\|_______|\|_______|`
 
+// Start starts the server
 func Start() {
+	fmt.Println(logo)
+
 	env := os.Getenv("ENV")
 
 	var conf config.LoadedData
@@ -45,9 +48,6 @@ func Start() {
 
 	logger := NewBPoolLogger(loggerUnsugared.Sugar())
 
-	// create google authorizer
-	authorizer := auth.NewGoogleAuthorizer(logger)
-
 	// create tokenizer
 	tokenizer := auth.NewTokenizer(
 		conf.Get("jwt.secret"),
@@ -63,11 +63,12 @@ func Start() {
 		conf.Get("db.name"),
 		conf.Get("db.port"),
 		conf.Get("db.host"),
+		logger,
 	)
 
 	userStore := postgres.NewUserStore(db)
 	postgres.CreateTables(userStore)
-	userService := services.NewUserService(userStore, authorizer, tokenizer, logger)
+	userService := services.NewUserService(userStore, tokenizer, logger)
 	userController := http.NewUserController(userService, int(conf.GetInt("jwt.num_days_valid")), conf.Get("jwt.cookie"), logger)
 	pagesController := http.NewPagesController(logger)
 
@@ -78,13 +79,17 @@ func Start() {
 	app.Debug = true
 
 	app.Pre(middleware.RequestID())
-	app.Use(middleware.Logger())
+	app.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: `${time_rfc3339_nano} ${method} {id":"${id}","remote_ip":"${remote_ip}",` +
+			`"uri":"${uri}","status":${status},"latency":${latency},` +
+			`"latency_human":"${latency_human}","bytes_in":${bytes_in},` +
+			`"bytes_out":${bytes_out}}` + "\n",
+	}))
 	app.Use(middleware.Gzip())
 	app.Use(middleware.Secure())
 	app.Use(middleware.Recover())
+	app.Use(middleware.RemoveTrailingSlash())
 	app.Use(auth.NewJWTmiddleware(tokenizer, conf.Get("jwt.cookie"), logger))
-
-	fmt.Println(logo)
 
 	pagesController.MountRoutes(app.Group(""))
 
@@ -92,8 +97,9 @@ func Start() {
 
 	userController.MountRoutes(auth)
 
+	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")
-	logger.Info("PORT", "port", port)
+	logger.Info("CONFIG", "port", port)
 	app.Logger.Fatal(app.Start(port))
 }
 
