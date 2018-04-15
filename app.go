@@ -72,6 +72,10 @@ func Start() {
 	userController := http.NewUserController(userService, int(conf.GetInt("jwt.num_days_valid")), conf.Get("jwt.cookie"), logger)
 	pagesController := http.NewPagesController(logger)
 
+	carStore := postgres.NewCarStore(db)
+	carService := services.NewCarService(carStore, logger)
+	carController := http.NewCarController(carService, logger)
+
 	app := echo.New()
 	app.HTTPErrorHandler = handleError(logger)
 
@@ -96,6 +100,7 @@ func Start() {
 	auth := app.Group("/api/v1")
 
 	userController.MountRoutes(auth)
+	carController.MountRoutes(auth)
 
 	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")

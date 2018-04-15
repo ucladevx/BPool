@@ -1,28 +1,36 @@
 package postgres
 
 import (
-	// "database/sql"
-
+	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
 	"github.com/ucladevx/BPool/models"
+	"github.com/ucladevx/BPool/stores"
 )
 
 var (
 	// ErrInvalidCarEntry error when user submits invalid car object
-	ErrInvalidCarEntry = errors.New("Invalid car entry")
+	ErrInvalidCarEntry = errors.New("invalid car entry")
 
 	// ErrNoCarFound error when no car is in db
-	ErrNoCarFound = errors.New("No car found")
+	ErrNoCarFound = errors.New("no car found")
 )
 
-//CarStore persists cars in pgsql db
-type CarStore struct {
-	db *sqlx.DB
-}
+type (
+	//CarStore persists cars in pgsql db
+	CarStore struct {
+		db *sqlx.DB
+	}
+
+	// CarRow is desired car database data
+	CarRow struct {
+		data map[string]interface{}
+	}
+)
 
 // NewCarStore creates a new pg car store
 func NewCarStore(db *sqlx.DB) *CarStore {
@@ -31,11 +39,67 @@ func NewCarStore(db *sqlx.DB) *CarStore {
 	}
 }
 
-func (c *CarStore) GetAll(limit, offset int) ([]*models.Car, error) {
+// GetAll finds all cars from db
+func (c *CarStore) GetAll(lastID string, limit int) ([]*models.Car, error) {
 	cars := []*models.Car{}
 
-	if err := c.db.Get(&cars, carsGetAllSQL, offset, limit); err != nil {
+	if err := c.db.Get(&cars, carsGetAllSQL, lastID, limit); err != nil {
 		return nil, err
+	}
+
+	return cars, nil
+}
+
+// GetByID finds car by id if it exists in db
+func (c *CarStore) GetByID(id string) (*models.Car, error) {
+	return c.getBy(carsGetByIDSQL, id)
+}
+
+// GetByWhere queries based on generated WHERE statement
+func (c *CarStore) GetByWhere(fields []string, queryModifiers []stores.QueryModifier) ([]CarRow, error) {
+	queryString := "SELECT "
+	queryString += strings.Join(fields, ", ")
+
+	query, vals := generateWhereStatement(&queryModifiers)
+
+	queryString += query
+
+	rows, err := c.db.Query(queryString, vals)
+
+	defer rows.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	columnNames, err := rows.Columns()
+
+	if err != nil {
+		return nil, err
+	}
+	// load car data with fields
+
+	cars := []CarRow{}
+	numFields := len(fields)
+
+	for rows.Next() {
+		cr := CarRow{}
+		columns := make([]interface{}, numFields)
+		columnPointers := make([]interface{}, numFields)
+
+		for i := 0; i < numFields; i++ {
+			columnPointers[i] = &columns[i]
+		}
+
+		if err := rows.Scan(columnPointers...); err != nil {
+			return nil, err
+		}
+
+		for i, col := range columns {
+			cr.data[columnNames[i]] = col
+		}
+
+		cars = append(cars, cr)
 	}
 
 	return cars, nil
@@ -47,7 +111,7 @@ func (c *CarStore) Insert(car *models.Car) error {
 
 	if err := row.Scan(&car.ID, &car.CreatedAt, &car.UpdatedAt); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok {
-			if pgErr.Code == "23505" {
+			if pgErr.Code.Name() == "unique_violation" {
 				return ErrUserAlreadyExists
 			}
 		}
@@ -57,26 +121,29 @@ func (c *CarStore) Insert(car *models.Car) error {
 	return nil
 }
 
-func (c *CarStore) Delete(car *models.Car) error {
+// Remove car from DB
+func (c *CarStore) Remove(car *models.Car) error {
 	_, err := c.db.Exec(carsDeleteSQL, car.ID)
 
 	if err != nil {
-		if pgErr, ok := err.(*pq.Error); ok {
-			return ErrInvalidCarEntry
-		}
-
-		return err
+		return ErrInvalidCarEntry
 	}
 
 	return nil
 }
 
-// func (c *CarStore) GetByID(id int) (*models.Car, error) {
-// 	var fields [1]string
-// 	fields[0] = strconv.Itoa(id)
-// 	return c.getByFields(carsGetByFieldsSQL, fields)
-// }
+func (c *CarStore) getBy(query string, args interface{}) (*models.Car, error) {
+	var car models.Car
 
-// func (c *CarStore) getBy
+	if err := c.db.Get(&car, query, args); err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrNoCarFound
+		}
+
+		return nil, err
+	}
+
+	return &car, nil
+}
 
 // TODO: Figure out how to do migrations
