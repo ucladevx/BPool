@@ -16,7 +16,7 @@ import (
 type (
 	// CarService is used to handle all car CRUD operations
 	CarService interface {
-		GetAllCars(token string) ([]*models.Car, error)
+		GetAllCars(lastID string, limit, authLevel int) ([]*models.Car, error)
 		GetCar(id string) (*models.Car, error)
 		AddCar(body map[interface{}]interface{}, userID string) (*models.Car, error)
 		DeleteCar(id string) error

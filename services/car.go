@@ -3,6 +3,8 @@ package services
 import (
 	"errors"
 
+	"github.com/ucladevx/BPool/stores/postgres"
+
 	"github.com/ucladevx/BPool/interfaces"
 	"github.com/ucladevx/BPool/models"
 	"github.com/ucladevx/BPool/stores"
@@ -30,8 +32,8 @@ type (
 	// CarStore any store that allows for users to be persisted
 	CarStore interface {
 		GetAll(lastID string, limit int) ([]*models.Car, error)
-		GetById(id string) (*models.Car, error)
-		GetByWhere(fields []string, queryModifiers []stores.QueryModifier) ([]CarRow, error)
+		GetByID(id string) (*models.Car, error)
+		GetByWhere(fields []string, queryModifiers []stores.QueryModifier) ([]postgres.CarRow, error)
 		Insert(user *models.Car) error
 		Remove(id string) error
 	}
@@ -60,7 +62,7 @@ func (c *CarService) GetAllCars(lastID string, limit int, authLevel int) ([]*mod
 
 // GetCar returns a car by id
 func (c *CarService) GetCar(id string) (*models.Car, error) {
-	return c.store.GetById(id)
+	return c.store.GetByID(id)
 }
 
 // AddCar creates a new car
@@ -74,6 +76,10 @@ func (c *CarService) AddCar(body map[interface{}]interface{}, userID string) (*m
 	fields := []string{"id"}
 
 	carRows, err := c.store.GetByWhere(fields, queryModifiers)
+
+	if err != nil {
+		return nil, ErrNotAllowed
+	}
 
 	if len(carRows) > carLimit {
 		return nil, ErrAtCarLimit

@@ -122,8 +122,8 @@ func (c *CarStore) Insert(car *models.Car) error {
 }
 
 // Remove car from DB
-func (c *CarStore) Remove(car *models.Car) error {
-	_, err := c.db.Exec(carsDeleteSQL, car.ID)
+func (c *CarStore) Remove(id string) error {
+	_, err := c.db.Exec(carsDeleteSQL, id)
 
 	if err != nil {
 		return ErrInvalidCarEntry
