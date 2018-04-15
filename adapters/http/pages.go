@@ -26,7 +26,7 @@ func (p *PagesController) MountRoutes(c *echo.Group) {
 }
 
 func (p *PagesController) index(c echo.Context) error {
-	return c.HTML(http.StatusOK, "<html><title>Golang Google</title> <body> <a href='/api/auth/login'><button>Login with Google!</button> </a> </body></html>")
+	return c.String(http.StatusOK, "Hello there!")
 }
 
 func (p *PagesController) health(c echo.Context) error {

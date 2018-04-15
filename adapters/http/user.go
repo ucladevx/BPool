@@ -50,7 +50,7 @@ func NewUserController(u UserService, daysTokenValidFor int, cookieName string, 
 
 // MountRoutes mounts the auth routes
 func (u *UserController) MountRoutes(c *echo.Group) {
-	c.GET("/users/", u.list, auth.NewAuthMiddleware(services.UserLevel, u.logger))
+	c.GET("/users", u.list, auth.NewAuthMiddleware(services.UserLevel, u.logger))
 	c.GET("/users/:id", u.show)
 	c.POST("/login", u.login)
 }

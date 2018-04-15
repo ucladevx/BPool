@@ -24,7 +24,7 @@ var (
 		LastName:     "DOE",
 		Email:        "johndoe@g.ucla.edu",
 		ProfileImage: "ucladevx.com",
-		AuthLevel:    0,
+		AuthLevel:    services.UserLevel,
 	}
 
 	janeSmith = models.User{
@@ -33,13 +33,12 @@ var (
 		LastName:     "SMITH",
 		Email:        "janesmith@g.ucla.edu",
 		ProfileImage: "google.com",
-		AuthLevel:    1,
+		AuthLevel:    services.AdminLevel,
 	}
 )
 
 func newUserService(store *mocks.UserStore) *services.UserService {
 	logger := mocks.Logger{}
-	authorizer := auth.NewGoogleAuthorizer(logger)
 	tokenizer := auth.NewTokenizer(
 		"secret",
 		"bpool",
@@ -47,7 +46,7 @@ func newUserService(store *mocks.UserStore) *services.UserService {
 		logger,
 	)
 
-	return services.NewUserService(store, authorizer, tokenizer, logger)
+	return services.NewUserService(store, tokenizer, logger)
 }
 
 func TestUserLogin(t *testing.T) {
@@ -139,14 +138,14 @@ func TestUserGetAll(t *testing.T) {
 	service := newUserService(store)
 	assert := assert.New(t)
 
-	noUsers, err := service.GetAll("", 15, 0)
+	noUsers, err := service.GetAll("", 15, services.UserLevel)
 	assert.Nil(noUsers, "when a user does not have the right auth level there should be no users")
 	assert.Equal(services.ErrNotAllowed, err, "when a user does not have the right auth level there should be a not allowed error")
 
 	badLimit := -1
 	store.On("GetAll", "", 15).Return([]*models.User{&johnDoe, &janeSmith}, nil)
 
-	users, err := service.GetAll("", badLimit, 1)
+	users, err := service.GetAll("", badLimit, services.AdminLevel)
 
 	assert.Nil(err, "for a bad limit, should still return no error")
 	assert.Equal(2, len(users), "the returned users should have length 2")
