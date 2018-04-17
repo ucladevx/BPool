@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -18,8 +17,8 @@ type (
 	CarService interface {
 		GetAllCars(lastID string, limit, authLevel int) ([]*models.Car, error)
 		GetCar(id string) (*models.Car, error)
-		AddCar(body map[interface{}]interface{}, userID string) (*models.Car, error)
-		DeleteCar(id string) error
+		AddCar(body services.CarRequestBody, userID string) (*models.Car, error)
+		DeleteCar(id, userID string) error
 	}
 
 	// CarController http adapter
@@ -40,9 +39,12 @@ func NewCarController(c CarService, l interfaces.Logger) *CarController {
 // MountRoutes mounts the car routes
 func (cc *CarController) MountRoutes(c *echo.Group) {
 	c.GET("/cars", cc.list, auth.NewAuthMiddleware(services.AdminLevel, cc.logger))
-	c.GET("/cars/:id", cc.show, auth.NewAuthMiddleware(services.UserLevel, cc.logger))
-	c.POST("/cars", cc.create, auth.NewAuthMiddleware(services.UserLevel, cc.logger))
-	c.DELETE("/cars/:id", cc.remove, auth.NewAuthMiddleware(services.UserLevel, cc.logger))
+
+	c.Use(auth.NewAuthMiddleware(services.UserLevel, cc.logger))
+
+	c.GET("/cars/:id", cc.show)
+	c.POST("/cars", cc.create)
+	c.DELETE("/cars/:id", cc.remove)
 }
 
 func (cc *CarController) list(c echo.Context) error {
@@ -62,14 +64,14 @@ func (cc *CarController) list(c echo.Context) error {
 
 	if err != nil {
 		if err == services.ErrNotAllowed {
-			return ErrNotAllowed
+			return echo.NewHTTPError(http.StatusForbidden, err)
 		}
 
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"cars": cars,
+		"data": cars,
 	})
 }
 
@@ -79,19 +81,18 @@ func (cc *CarController) show(c echo.Context) error {
 	car, err := cc.service.GetCar(id)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"car": car,
+		"data": car,
 	})
 }
 
 func (cc *CarController) create(c echo.Context) error {
-	body := make(map[interface{}]interface{})
-	err := json.NewDecoder(c.Request().Body).Decode(&body)
+	var body services.CarRequestBody
 
-	if err != nil {
+	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -104,14 +105,20 @@ func (cc *CarController) create(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, echo.Map{
-		"car": car,
+		"data": car,
 	})
 }
 
 func (cc *CarController) remove(c echo.Context) error {
 	id := c.Param("id")
 
-	if err := cc.service.DeleteCar(id); err != nil {
+	userClaims := userClaimsFromContext(c)
+
+	if err := cc.service.DeleteCar(id, userClaims.ID); err != nil {
+		if err == services.ErrNotCarOwner {
+			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+		}
+
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 

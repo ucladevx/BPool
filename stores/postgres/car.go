@@ -10,6 +10,7 @@ import (
 
 	"github.com/ucladevx/BPool/models"
 	"github.com/ucladevx/BPool/stores"
+	"github.com/ucladevx/BPool/utils/id"
 )
 
 var (
@@ -18,12 +19,16 @@ var (
 
 	// ErrNoCarFound error when no car is in db
 	ErrNoCarFound = errors.New("no car found")
+
+	// ErrCarAlreadyExists error when a duplicate car insertion is attempted
+	ErrCarAlreadyExists = errors.New("car already exists")
 )
 
 type (
 	//CarStore persists cars in pgsql db
 	CarStore struct {
-		db *sqlx.DB
+		db    *sqlx.DB
+		idGen IDgen
 	}
 
 	// CarRow is desired car database data
@@ -35,7 +40,8 @@ type (
 // NewCarStore creates a new pg car store
 func NewCarStore(db *sqlx.DB) *CarStore {
 	return &CarStore{
-		db: db,
+		db:    db,
+		idGen: id.New,
 	}
 }
 
@@ -53,6 +59,22 @@ func (c *CarStore) GetAll(lastID string, limit int) ([]*models.Car, error) {
 // GetByID finds car by id if it exists in db
 func (c *CarStore) GetByID(id string) (*models.Car, error) {
 	return c.getBy(carsGetByIDSQL, id)
+}
+
+// GetCount gets the count of a generated where statement
+func (c *CarStore) GetCount(queryModifiers []stores.QueryModifier) (int, error) {
+	var count int
+
+	query, vals := generateWhereStatement(&queryModifiers)
+	queryString := carsGetCountSQL + query
+
+	err := c.db.Get(&count, queryString, vals)
+
+	if err != nil {
+		return -1, err
+	}
+
+	return count, nil
 }
 
 // GetByWhere queries based on generated WHERE statement
@@ -77,7 +99,6 @@ func (c *CarStore) GetByWhere(fields []string, queryModifiers []stores.QueryModi
 	if err != nil {
 		return nil, err
 	}
-	// load car data with fields
 
 	cars := []CarRow{}
 	numFields := len(fields)
@@ -107,12 +128,13 @@ func (c *CarStore) GetByWhere(fields []string, queryModifiers []stores.QueryModi
 
 // Insert persists a user to the DB
 func (c *CarStore) Insert(car *models.Car) error {
-	row := c.db.QueryRow(userInsertSQL, car.Make, car.Model, car.Year, car.Color, car.UserID, car.ID)
+	car.ID = c.idGen()
+	row := c.db.QueryRow(carsInsertSQL, car.ID, car.Make, car.Model, car.Year, car.Color, car.UserID)
 
 	if err := row.Scan(&car.ID, &car.CreatedAt, &car.UpdatedAt); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok {
 			if pgErr.Code.Name() == "unique_violation" {
-				return ErrUserAlreadyExists
+				return ErrCarAlreadyExists
 			}
 		}
 		return err

@@ -15,11 +15,14 @@ const (
 )
 
 var (
-	// ErrInvalidCarEntry error when user submits invalid car object
+	// ErrCarValidation error when user submits invalid car object
 	ErrCarValidation = errors.New("car model validation failed")
 
-	// ErrNoCarFound error when no car is in db
+	// ErrAtCarLimit error when no car is in db
 	ErrAtCarLimit = errors.New("user currently has maximum number of cars")
+
+	// ErrNotCarOwner error when no car is in db
+	ErrNotCarOwner = errors.New("user does not own car")
 )
 
 type (
@@ -33,6 +36,7 @@ type (
 	CarStore interface {
 		GetAll(lastID string, limit int) ([]*models.Car, error)
 		GetByID(id string) (*models.Car, error)
+		GetCount(queryModifiers []stores.QueryModifier) (int, error)
 		GetByWhere(fields []string, queryModifiers []stores.QueryModifier) ([]postgres.CarRow, error)
 		Insert(user *models.Car) error
 		Remove(id string) error
@@ -66,27 +70,26 @@ func (c *CarService) GetCar(id string) (*models.Car, error) {
 }
 
 // AddCar creates a new car
-func (c *CarService) AddCar(body map[interface{}]interface{}, userID string) (*models.Car, error) {
-	make, year, color := body["make"].(string), body["year"].(int), body["color"].(string)
+func (c *CarService) AddCar(body CarRequestBody, userID string) (*models.Car, error) {
+	make, model, year, color := body.Make, body.Model, body.Year, body.Color
 
 	queryModifiers := []stores.QueryModifier{
 		stores.QueryMod("user_id", stores.EQ, userID),
 	}
 
-	fields := []string{"id"}
-
-	carRows, err := c.store.GetByWhere(fields, queryModifiers)
+	count, err := c.store.GetCount(queryModifiers)
 
 	if err != nil {
-		return nil, ErrNotAllowed
+		return nil, err
 	}
 
-	if len(carRows) > carLimit {
+	if count >= carLimit {
 		return nil, ErrAtCarLimit
 	}
 
 	car := &models.Car{
 		Make:   make,
+		Model:  model,
 		Year:   year,
 		Color:  color,
 		UserID: userID,
@@ -94,7 +97,7 @@ func (c *CarService) AddCar(body map[interface{}]interface{}, userID string) (*m
 
 	// model validation
 	if errs := car.Validate(); len(errs) > 0 {
-		c.logger.Info("Validation", errs)
+		c.logger.Info("CarService.AddCar - validate", "error", errs)
 		return nil, ErrCarValidation
 	}
 
@@ -108,6 +111,17 @@ func (c *CarService) AddCar(body map[interface{}]interface{}, userID string) (*m
 }
 
 // DeleteCar deletes based on id
-func (c *CarService) DeleteCar(id string) error {
+func (c *CarService) DeleteCar(id, userID string) error {
+	car, err := c.store.GetByID(id)
+
+	if err != nil {
+		return err
+	}
+
+	if car.UserID != userID {
+		c.logger.Error("CarService.DeleteCar - unable to delete car", "error", ErrNotCarOwner)
+		return ErrNotCarOwner
+	}
+
 	return c.store.Remove(id)
 }

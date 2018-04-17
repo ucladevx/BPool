@@ -26,8 +26,8 @@ func (c *Car) Validate() []error {
 		errs = append(errs, errors.New("please provide car's make"))
 	}
 
-	if c.Year > time.Now().Year()+1 || c.Year < 1000 {
-		errs = append(errs, errors.New("year must cannot be too far in the past or in the future"))
+	if c.Year > time.Now().Year()+1 || c.Year < 1900 {
+		errs = append(errs, errors.New("year cannot be too far in the past or anytime in the future"))
 	}
 
 	if c.Color == "" {
