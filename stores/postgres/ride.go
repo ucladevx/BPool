@@ -50,6 +50,7 @@ func (r *RideStore) Insert(ride *models.Ride) error {
 	ride.ID = r.idGen()
 	row := r.db.QueryRow(
 		rideInsertSQL,
+		ride.ID,
 		ride.DriverID,
 		ride.CarID,
 		ride.Seats,

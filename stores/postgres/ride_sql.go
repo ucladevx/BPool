@@ -4,7 +4,7 @@ const (
 	rideTableName = "rides"
 
 	rideCreateTable = `
-CREATE EXTENSION postgis;
+CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE TABLE IF NOT EXISTS rides (
     id varchar(20) primary key,
     driver_id varchar(20) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS rides (
 		info TEXT,
 		created_at timestamptz DEFAULT NOW(),
 		updated_at timestamptz DEFAULT NOW(),
-		FOREIGN KEY (driver_id) REFERENCES user (id) ON DELETE CASCADE
+		FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE CASCADE
 );`
 
 	// TODO: add foreign key for car_id when that is merged
