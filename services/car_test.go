@@ -58,7 +58,7 @@ func TestCarAdd(t *testing.T) {
 	// testing model validation
 	store.On("GetCount", queryModifiers).Return(0, nil)
 
-	invalidRequestBody := services.CarRequestBody{
+	invalidRequestBody := models.Car{
 		Make:  "",
 		Year:  3000,
 		Color: "",
@@ -69,7 +69,7 @@ func TestCarAdd(t *testing.T) {
 	assert.Nil(noCar, "user cannot insert a car with invalid parameters")
 	assert.EqualError(err, "car model validation failed")
 
-	validRequestBody := services.CarRequestBody{
+	validRequestBody := models.Car{
 		Make:  "Toyata",
 		Model: "Prius",
 		Year:  2015,

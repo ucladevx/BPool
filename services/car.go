@@ -35,16 +35,8 @@ type (
 		GetAll(lastID string, limit int) ([]*models.Car, error)
 		GetByID(id string) (*models.Car, error)
 		GetCount(queryModifiers []stores.QueryModifier) (int, error)
-		Insert(user *models.Car) error
+		Insert(car *models.Car) error
 		Remove(id string) error
-	}
-
-	// CarRequestBody holds the necessary fields for a car
-	CarRequestBody struct {
-		Make  string
-		Model string
-		Year  int
-		Color string
 	}
 )
 
@@ -75,7 +67,7 @@ func (c *CarService) GetCar(id string) (*models.Car, error) {
 }
 
 // AddCar creates a new car
-func (c *CarService) AddCar(body CarRequestBody, userID string) (*models.Car, error) {
+func (c *CarService) AddCar(body models.Car, userID string) (*models.Car, error) {
 	make, model, year, color := body.Make, body.Model, body.Year, body.Color
 
 	queryModifiers := []stores.QueryModifier{
