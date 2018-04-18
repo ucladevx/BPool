@@ -136,14 +136,14 @@ func TestCarGetAll(t *testing.T) {
 	service := newCarService(store)
 	assert := assert.New(t)
 
-	noCars, err := service.GetAllCars("", 10, services.UserLevel)
+	noCars, err := service.GetAll("", 10, services.UserLevel)
 	assert.Nil(noCars, "returns no cars when user does not have correct auth level")
 	assert.EqualError(err, "user is not allowed")
 
 	store.On("GetAll", "", 15).Return([]*models.Car{&testCar}, nil)
 	badLimit := -1
 
-	cars, err := service.GetAllCars("", badLimit, services.AdminLevel)
+	cars, err := service.GetAll("", badLimit, services.AdminLevel)
 
 	assert.Nil(err, "no error should be returned for a bad limit")
 	assert.Equal(1, len(cars), "returned cars should have length 1")

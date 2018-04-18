@@ -18,6 +18,15 @@ type Car struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
+// CarChangeSet is an object for updates
+type CarChangeSet struct {
+	Make   *string
+	Model  *string
+	Year   *int
+	Color  *string
+	UserID *string // this one you would set in adapter
+}
+
 // Validate validates car before insertion and updates
 func (c *Car) Validate() []error {
 	var errs []error

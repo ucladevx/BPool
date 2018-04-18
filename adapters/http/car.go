@@ -9,13 +9,14 @@ import (
 	"github.com/ucladevx/BPool/interfaces"
 	"github.com/ucladevx/BPool/models"
 	"github.com/ucladevx/BPool/services"
+	"github.com/ucladevx/BPool/stores/postgres"
 	"github.com/ucladevx/BPool/utils/auth"
 )
 
 type (
 	// CarService is used to handle all car CRUD operations
 	CarService interface {
-		GetAllCars(lastID string, limit, authLevel int) ([]*models.Car, error)
+		GetAll(lastID string, limit, authLevel int) ([]*models.Car, error)
 		GetCar(id string) (*models.Car, error)
 		AddCar(body services.CarRequestBody, userID string) (*models.Car, error)
 		DeleteCar(id, userID string) error
@@ -60,7 +61,7 @@ func (cc *CarController) list(c echo.Context) error {
 
 	lastID := c.QueryParam("last")
 
-	cars, err := cc.service.GetAllCars(lastID, limit, user.AuthLevel)
+	cars, err := cc.service.GetAll(lastID, limit, user.AuthLevel)
 
 	if err != nil {
 		if err == services.ErrNotAllowed {
@@ -81,7 +82,11 @@ func (cc *CarController) show(c echo.Context) error {
 	car, err := cc.service.GetCar(id)
 
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		if err == postgres.ErrNoCarFound {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -116,7 +121,7 @@ func (cc *CarController) remove(c echo.Context) error {
 
 	if err := cc.service.DeleteCar(id, userClaims.ID); err != nil {
 		if err == services.ErrNotCarOwner {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+			return echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

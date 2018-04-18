@@ -3,15 +3,13 @@ package services
 import (
 	"errors"
 
-	"github.com/ucladevx/BPool/stores/postgres"
-
 	"github.com/ucladevx/BPool/interfaces"
 	"github.com/ucladevx/BPool/models"
 	"github.com/ucladevx/BPool/stores"
 )
 
 const (
-	carLimit = 10
+	userCarLimit = 10
 )
 
 var (
@@ -37,9 +35,16 @@ type (
 		GetAll(lastID string, limit int) ([]*models.Car, error)
 		GetByID(id string) (*models.Car, error)
 		GetCount(queryModifiers []stores.QueryModifier) (int, error)
-		GetByWhere(fields []string, queryModifiers []stores.QueryModifier) ([]postgres.CarRow, error)
 		Insert(user *models.Car) error
 		Remove(id string) error
+	}
+
+	// CarRequestBody holds the necessary fields for a car
+	CarRequestBody struct {
+		Make  string
+		Model string
+		Year  int
+		Color string
 	}
 )
 
@@ -52,7 +57,7 @@ func NewCarService(store CarStore, l interfaces.Logger) *CarService {
 }
 
 // GetAllCars returns all cars
-func (c *CarService) GetAllCars(lastID string, limit int, authLevel int) ([]*models.Car, error) {
+func (c *CarService) GetAll(lastID string, limit int, authLevel int) ([]*models.Car, error) {
 	if authLevel < AdminLevel {
 		return nil, ErrNotAllowed
 	}
@@ -83,7 +88,7 @@ func (c *CarService) AddCar(body CarRequestBody, userID string) (*models.Car, er
 		return nil, err
 	}
 
-	if count >= carLimit {
+	if count >= userCarLimit {
 		return nil, ErrAtCarLimit
 	}
 
