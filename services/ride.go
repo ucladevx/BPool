@@ -12,7 +12,7 @@ type (
 		logger interfaces.Logger
 	}
 
-	// RideStore any store that allows for users to be persisted
+	// RideStore any store that allows for rides to be persisted
 	RideStore interface {
 		GetAll(lastID string, limit int) ([]*models.Ride, error)
 		GetByID(id string) (*models.Ride, error)
@@ -20,7 +20,7 @@ type (
 	}
 )
 
-// NewRideService creates a new user service
+// NewRideService creates a new ride service
 func NewRideService(store RideStore, l interfaces.Logger) *RideService {
 	return &RideService{
 		store:  store,
@@ -28,7 +28,7 @@ func NewRideService(store RideStore, l interfaces.Logger) *RideService {
 	}
 }
 
-// Create persists a user
+// Create persists a ride
 func (r *RideService) Create(ride *models.Ride) error {
 	if err := ride.Validate(); err != nil {
 		return err
@@ -47,7 +47,7 @@ func (r *RideService) Get(id string) (*models.Ride, error) {
 	return r.store.GetByID(id)
 }
 
-// GetAll returns a page of users
+// GetAll returns a page of rides
 func (r *RideService) GetAll(lastID string, limit, userAuthLevel int) ([]*models.Ride, error) {
 	if userAuthLevel < AdminLevel {
 		return nil, ErrNotAllowed
