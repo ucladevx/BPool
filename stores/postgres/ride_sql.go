@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS rides (
 		end_dest_lon NUMERIC(9,6) NOT NULL,
 		price_per_seat INT DEFAULT 15 NOT NULL,
 		info TEXT,
+		start_date timestamptz NOT NULL,
 		created_at timestamptz DEFAULT NOW(),
 		updated_at timestamptz DEFAULT NOW(),
 		FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE CASCADE
@@ -29,6 +30,6 @@ CREATE TABLE IF NOT EXISTS rides (
 
 	rideGetByIDSQL = "SELECT * FROM rides WHERE id=$1"
 
-	rideInsertSQL = "INSERT INTO rides (id, driver_id, car_id, seats, start_city, end_city, start_dest_lat, start_dest_lon, end_dest_lat, end_dest_lon, price_per_seat, info)" +
-		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING created_at, updated_at"
+	rideInsertSQL = "INSERT INTO rides (id, driver_id, car_id, seats, start_city, end_city, start_dest_lat, start_dest_lon, end_dest_lat, end_dest_lon, price_per_seat, info, start_date)" +
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING created_at, updated_at"
 )

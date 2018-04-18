@@ -62,6 +62,7 @@ func (r *RideStore) Insert(ride *models.Ride) error {
 		ride.EndLon,
 		ride.PricePerSeat,
 		ride.Info,
+		ride.StartDate,
 	)
 
 	if err := row.Scan(&ride.CreatedAt, &ride.UpdatedAt); err != nil {
