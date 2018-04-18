@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/ucladevx/BPool/interfaces"
@@ -45,9 +46,14 @@ func (r *RideController) MountRoutes(c *echo.Group) {
 }
 
 func (r *RideController) create(c echo.Context) error {
-	var data models.RideChangeSet
+	data := models.RideChangeSet{}
 	if err := c.Bind(&data); err != nil {
-		echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		msg := err.Error()
+		if strings.HasPrefix(err.Error(), "code=400, message=Syntax error") {
+			msg = "The JSON was invalid"
+		}
+
+		return echo.NewHTTPError(http.StatusBadRequest, msg)
 	}
 
 	user := userClaimsFromContext(c)
