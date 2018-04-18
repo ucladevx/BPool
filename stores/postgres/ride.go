@@ -72,6 +72,12 @@ func (r *RideStore) Insert(ride *models.Ride) error {
 	return nil
 }
 
+// Delete deletes the ride, does no verification
+func (r *RideStore) Delete(id string) error {
+	_, err := r.db.Exec(rideDeleteSQL, id)
+	return err
+}
+
 func (r *RideStore) getBy(query string, arg interface{}) (*models.Ride, error) {
 	var ride models.Ride
 

@@ -12,11 +12,12 @@ import (
 )
 
 type (
-	// RideService is used to handle the user use cases
+	// RideService is used to handle the ride use cases
 	RideService interface {
 		Create(ride *models.Ride) error
 		Get(id string) (*models.Ride, error)
 		GetAll(lastID string, limit, userAuthLevel int) ([]*models.Ride, error)
+		Delete(id string, user *auth.UserClaims) error
 	}
 
 	// RideController http adapter
@@ -38,7 +39,9 @@ func NewRideController(r RideService, l interfaces.Logger) *RideController {
 func (r *RideController) MountRoutes(c *echo.Group) {
 	c.GET("/rides", r.list, auth.NewAuthMiddleware(services.AdminLevel, r.logger))
 	c.GET("/rides/:id", r.show)
-	c.POST("/rides", r.create, auth.NewAuthMiddleware(services.UserLevel, r.logger))
+	c.Use(auth.NewAuthMiddleware(services.UserLevel, r.logger))
+	c.POST("/rides", r.create)
+	c.DELETE("/rides/:id", r.delete)
 }
 
 func (r *RideController) create(c echo.Context) error {
@@ -102,4 +105,25 @@ func (r *RideController) show(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"data": ride,
 	})
+}
+
+func (r *RideController) delete(c echo.Context) error {
+	id := c.Param("id")
+
+	user := userClaimsFromContext(c)
+
+	err := r.service.Delete(id, user)
+
+	if err != nil {
+		status := 400
+		if err == services.ErrNotAllowed {
+			status = 401
+		} else if err == services.ErrForbidden {
+			status = 403
+		}
+
+		return echo.NewHTTPError(status, err.Error())
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

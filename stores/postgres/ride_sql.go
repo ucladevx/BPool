@@ -32,4 +32,6 @@ CREATE TABLE IF NOT EXISTS rides (
 
 	rideInsertSQL = "INSERT INTO rides (id, driver_id, car_id, seats, start_city, end_city, start_dest_lat, start_dest_lon, end_dest_lat, end_dest_lon, price_per_seat, info, start_date)" +
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING created_at, updated_at"
+
+	rideDeleteSQL = "DELETE FROM rides WHERE id=$1"
 )

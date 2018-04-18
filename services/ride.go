@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/ucladevx/BPool/interfaces"
 	"github.com/ucladevx/BPool/models"
+	"github.com/ucladevx/BPool/utils/auth"
 )
 
 type (
@@ -17,6 +18,7 @@ type (
 		GetAll(lastID string, limit int) ([]*models.Ride, error)
 		GetByID(id string) (*models.Ride, error)
 		Insert(ride *models.Ride) error
+		Delete(id string) error
 	}
 )
 
@@ -58,4 +60,19 @@ func (r *RideService) GetAll(lastID string, limit, userAuthLevel int) ([]*models
 	}
 
 	return r.store.GetAll(lastID, limit)
+}
+
+// Delete removes a ride from the store if the user is allowed to
+func (r *RideService) Delete(id string, user *auth.UserClaims) error {
+	ride, err := r.store.GetByID(id)
+	if err != nil {
+		r.logger.Error("RideService.Delete - GetRide", "error", err.Error())
+		return err
+	}
+
+	if user.AuthLevel != AdminLevel && ride.DriverID != user.ID {
+		return ErrForbidden
+	}
+
+	return r.store.Delete(ride.ID)
 }
