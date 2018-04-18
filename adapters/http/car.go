@@ -18,7 +18,7 @@ type (
 	CarService interface {
 		GetAll(lastID string, limit, authLevel int) ([]*models.Car, error)
 		GetCar(id string) (*models.Car, error)
-		AddCar(body services.CarRequestBody, userID string) (*models.Car, error)
+		AddCar(body models.Car, userID string) (*models.Car, error)
 		DeleteCar(id, userID string) error
 	}
 
@@ -95,7 +95,7 @@ func (cc *CarController) show(c echo.Context) error {
 }
 
 func (cc *CarController) create(c echo.Context) error {
-	var body services.CarRequestBody
+	var body models.Car
 
 	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
