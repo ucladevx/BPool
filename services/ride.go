@@ -19,6 +19,7 @@ type (
 		GetByID(id string) (*models.Ride, error)
 		Insert(ride *models.Ride) error
 		Delete(id string) error
+		Update(ride *models.Ride) error
 	}
 )
 
@@ -42,6 +43,30 @@ func (r *RideService) Create(ride *models.Ride) error {
 	}
 
 	return nil
+}
+
+func (r *RideService) Update(updates *models.RideChangeSet, rideID string, user *auth.UserClaims) (*models.Ride, error) {
+	ride, err := r.store.GetByID(rideID)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.AuthLevel != AdminLevel && ride.DriverID != user.ID {
+		return nil, ErrForbidden
+	}
+
+	err = ride.ApplyUpdates(updates)
+	if err != nil {
+		r.logger.Error("RideService.Update - apply updates", "error", err.Error())
+		return nil, err
+	}
+
+	if err = r.store.Update(ride); err != nil {
+		r.logger.Error("RideService.Update - store update", "error", err.Error())
+		return nil, err
+	}
+
+	return ride, nil
 }
 
 // Get returns a ride by ID

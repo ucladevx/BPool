@@ -72,6 +72,31 @@ func (r *RideStore) Insert(ride *models.Ride) error {
 	return nil
 }
 
+// Update persists the updates for the given ride
+func (r *RideStore) Update(ride *models.Ride) error {
+	row := r.db.QueryRow(
+		rideUpdateSQL,
+		ride.CarID,
+		ride.Seats,
+		ride.StartCity,
+		ride.EndCity,
+		ride.StartLat,
+		ride.StartLon,
+		ride.EndLat,
+		ride.EndLon,
+		ride.PricePerSeat,
+		ride.Info,
+		ride.StartDate,
+		ride.ID,
+	)
+
+	if err := row.Scan(&ride.UpdatedAt); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Delete deletes the ride, does no verification
 func (r *RideStore) Delete(id string) error {
 	_, err := r.db.Exec(rideDeleteSQL, id)

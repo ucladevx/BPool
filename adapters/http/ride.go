@@ -17,6 +17,7 @@ type (
 	RideService interface {
 		Create(ride *models.Ride) error
 		Get(id string) (*models.Ride, error)
+		Update(updates *models.RideChangeSet, rideID string, user *auth.UserClaims) (*models.Ride, error)
 		GetAll(lastID string, limit, userAuthLevel int) ([]*models.Ride, error)
 		Delete(id string, user *auth.UserClaims) error
 	}
@@ -43,6 +44,7 @@ func (r *RideController) MountRoutes(c *echo.Group) {
 	c.Use(auth.NewAuthMiddleware(services.UserLevel, r.logger))
 	c.POST("/rides", r.create)
 	c.DELETE("/rides/:id", r.delete)
+	c.PUT("/rides/:id", r.update)
 }
 
 func (r *RideController) create(c echo.Context) error {
@@ -106,6 +108,37 @@ func (r *RideController) show(c echo.Context) error {
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"data": ride,
+	})
+}
+
+func (r *RideController) update(c echo.Context) error {
+	id := c.Param("id")
+
+	data := models.RideChangeSet{}
+	if err := c.Bind(&data); err != nil {
+		msg := err.Error()
+		if strings.HasPrefix(err.Error(), "code=400, message=Syntax error") {
+			msg = "The JSON was invalid"
+		}
+
+		return echo.NewHTTPError(http.StatusBadRequest, msg)
+	}
+
+	user := userClaimsFromContext(c)
+
+	ride, err := r.service.Update(&data, id, user)
+
+	if err != nil {
+		status := http.StatusBadRequest
+		if err == services.ErrForbidden {
+			status = http.StatusForbidden
+		}
+
+		return echo.NewHTTPError(status, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
