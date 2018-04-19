@@ -11,7 +11,7 @@ const (
 		user_id varchar(20) NOT NULL,
 		created_at timestamptz DEFAULT NOW(),
 		updated_at timestamptz DEFAULT NOW(),
-		FOREIGN KEY(user_id) REFERENCES user (id) ON DELETE CASCADE
+		FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
 	);`
 
 	carsGetAllSQL = "SELECT * FROM cars WHERE id > $1 LIMIT $2"

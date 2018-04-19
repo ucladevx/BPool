@@ -44,7 +44,7 @@ func NewCarStore(db *sqlx.DB) *CarStore {
 func (c *CarStore) GetAll(lastID string, limit int) ([]*models.Car, error) {
 	cars := []*models.Car{}
 
-	if err := c.db.Get(&cars, carsGetAllSQL, lastID, limit); err != nil {
+	if err := c.db.Select(&cars, carsGetAllSQL, lastID, limit); err != nil {
 		return nil, err
 	}
 
@@ -63,7 +63,7 @@ func (c *CarStore) GetCount(queryModifiers []stores.QueryModifier) (int, error) 
 	query, vals := generateWhereStatement(&queryModifiers)
 	queryString := carsGetCountSQL + query
 
-	err := c.db.Get(&count, queryString, vals)
+	err := c.db.Get(&count, queryString, vals...)
 
 	if err != nil {
 		return -1, err
@@ -75,6 +75,7 @@ func (c *CarStore) GetCount(queryModifiers []stores.QueryModifier) (int, error) 
 // Insert persists a user to the DB
 func (c *CarStore) Insert(car *models.Car) error {
 	car.ID = c.idGen()
+
 	row := c.db.QueryRow(carsInsertSQL, car.ID, car.Make, car.Model, car.Year, car.Color, car.UserID)
 
 	if err := row.Scan(&car.CreatedAt, &car.UpdatedAt); err != nil {
@@ -109,4 +110,6 @@ func (c *CarStore) getBy(query string, args interface{}) (*models.Car, error) {
 	return &car, nil
 }
 
-// TODO: Figure out how to do migrations
+func (c *CarStore) migrate() {
+	c.db.MustExec(carsCreateTable)
+}
