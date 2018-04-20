@@ -67,9 +67,9 @@ func Start() {
 	)
 
 	userStore := postgres.NewUserStore(db)
-	rideStore := postgres.NewRideStore(db)
+	carStore := postgres.NewCarStore(db)
 
-	postgres.CreateTables(userStore, rideStore)
+	postgres.CreateTables(userStore, carStore, rideStore)
 
 	userService := services.NewUserService(userStore, tokenizer, logger)
 	rideService := services.NewRideService(rideStore, logger)
@@ -77,6 +77,9 @@ func Start() {
 	userController := http.NewUserController(userService, int(conf.GetInt("jwt.num_days_valid")), conf.Get("jwt.cookie"), logger)
 	rideController := http.NewRideController(rideService, logger)
 	pagesController := http.NewPagesController(logger)
+
+	carService := services.NewCarService(carStore, logger)
+	carController := http.NewCarController(carService, logger)
 
 	app := echo.New()
 	app.HTTPErrorHandler = handleError(logger)
@@ -92,6 +95,7 @@ func Start() {
 			`"bytes_out":${bytes_out}}` + "\n",
 	}))
 	app.Use(middleware.Gzip())
+	app.Use(middleware.CORS())
 	app.Use(middleware.Secure())
 	app.Use(middleware.Recover())
 	app.Use(middleware.RemoveTrailingSlash())
@@ -101,6 +105,7 @@ func Start() {
 
 	userController.MountRoutes(app.Group("/api/v1"))
 	rideController.MountRoutes(app.Group("/api/v1"))
+	carController.MountRoutes(app.Group("/api/v1"))
 
 	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")
