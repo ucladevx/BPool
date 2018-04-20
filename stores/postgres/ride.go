@@ -104,7 +104,7 @@ func (r *RideStore) Delete(id string) error {
 }
 
 func (r *RideStore) getBy(query string, arg interface{}) (*models.Ride, error) {
-	var ride models.Ride
+	ride := models.Ride{}
 
 	if err := r.db.Get(&ride, query, arg); err != nil {
 		if err == sql.ErrNoRows {

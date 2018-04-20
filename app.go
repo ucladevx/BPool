@@ -99,8 +99,7 @@ func Start() {
 
 	pagesController.MountRoutes(app.Group(""))
 
-	auth := app.Group("/api/v1")
-	userController.MountRoutes(auth)
+	userController.MountRoutes(app.Group("/api/v1"))
 	rideController.MountRoutes(app.Group("/api/v1"))
 
 	logger.Info("CONFIG", "env", env)

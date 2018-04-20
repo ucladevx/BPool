@@ -28,7 +28,7 @@ func TestRideApplyUpdates(t *testing.T) {
 
 	newSeats := 3
 	newEndCity := "San Jose"
-	newPricePerSeat := 20
+	newPricePerSeat := 20.0
 
 	changes := models.RideChangeSet{
 		Seats:        &newSeats,

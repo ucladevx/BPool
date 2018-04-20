@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS rides (
 	start_dest_lon NUMERIC(9,6) NOT NULL,
 	end_dest_lat NUMERIC(9,6) NOT NULL,
 	end_dest_lon NUMERIC(9,6) NOT NULL,
-	price_per_seat INT DEFAULT 15 NOT NULL,
+	price_per_seat NUMERIC(10,2) DEFAULT 15 NOT NULL,
 	info TEXT,
 	start_date timestamptz NOT NULL,
 	created_at timestamptz DEFAULT NOW(),

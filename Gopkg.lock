@@ -20,10 +20,10 @@
   version = "v3.2.0"
 
 [[projects]]
-  name = "github.com/imdario/mergo"
+  name = "github.com/go-ozzo/ozzo-validation"
   packages = ["."]
-  revision = "9d5f1277e9a8ed20c3684bda8fde67c05628518c"
-  version = "v0.3.4"
+  revision = "85dcd8368eba387e65a03488b003e233994e87e9"
+  version = "v3.3"
 
 [[projects]]
   branch = "master"
@@ -112,8 +112,8 @@
 [[projects]]
   name = "go.uber.org/zap"
   packages = [".","buffer","internal/bufferpool","internal/color","internal/exit","zapcore"]
-  revision = "35aad584952c3e7020db7b839f6b102de6271f89"
-  version = "v1.7.1"
+  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
+  version = "v1.8.0"
 
 [[projects]]
   branch = "master"
@@ -136,6 +136,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "870c6b29ae3e7382c2c40b57ab47d05f876b35e4678cd9326d229a06fc9d6d95"
+  inputs-digest = "169d14a956f4d7c9e396fde2592c407ce43be65f2cdd39eadeedba1c6f23f86b"
   solver-name = "gps-cdcl"
   solver-version = 1
