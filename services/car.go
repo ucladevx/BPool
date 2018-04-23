@@ -6,6 +6,7 @@ import (
 	"github.com/ucladevx/BPool/interfaces"
 	"github.com/ucladevx/BPool/models"
 	"github.com/ucladevx/BPool/stores"
+	"github.com/ucladevx/BPool/utils/auth"
 )
 
 const (
@@ -121,4 +122,18 @@ func (c *CarService) DeleteCar(id, userID string) error {
 	}
 
 	return c.store.Remove(id)
+}
+
+// IsOwnerOrAdmin indicates if the user is the car owner
+func (c *CarService) IsOwnerOrAdmin(carID string, user *auth.UserClaims) (bool, error) {
+	car, err := c.GetCar(carID)
+	if err != nil {
+		return false, err
+	}
+
+	if car.UserID != user.ID && user.AuthLevel != AdminLevel {
+		return false, ErrNotCarOwner
+	}
+
+	return true, nil
 }

@@ -68,17 +68,18 @@ func Start() {
 
 	userStore := postgres.NewUserStore(db)
 	carStore := postgres.NewCarStore(db)
+	rideStore := postgres.NewRideStore(db)
 
 	postgres.CreateTables(userStore, carStore, rideStore)
 
 	userService := services.NewUserService(userStore, tokenizer, logger)
-	rideService := services.NewRideService(rideStore, logger)
+	carService := services.NewCarService(carStore, logger)
+	rideService := services.NewRideService(rideStore, carService, logger)
 
 	userController := http.NewUserController(userService, int(conf.GetInt("jwt.num_days_valid")), conf.Get("jwt.cookie"), logger)
 	rideController := http.NewRideController(rideService, logger)
 	pagesController := http.NewPagesController(logger)
 
-	carService := services.NewCarService(carStore, logger)
 	carController := http.NewCarController(carService, logger)
 
 	app := echo.New()

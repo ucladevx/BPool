@@ -45,13 +45,14 @@ type (
 )
 
 // NewRide returns a Ride with the change set fields applied
-func NewRide(r *RideChangeSet) *Ride {
+func NewRide(r *RideChangeSet) (*Ride, error) {
 	ride := Ride{}
 
-	// ignore errors because we will jsut return a zero valued ride
-	ride.ApplyUpdates(r)
+	if err := ride.ApplyUpdates(r); err != nil {
+		return nil, err
+	}
 
-	return &ride
+	return &ride, nil
 }
 
 // Validate validates a ride

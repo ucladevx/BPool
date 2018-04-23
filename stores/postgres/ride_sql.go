@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS rides (
 	start_date timestamptz NOT NULL,
 	created_at timestamptz DEFAULT NOW(),
 	updated_at timestamptz DEFAULT NOW(),
-	FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE CASCADE
+	FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE CASCADE,
+	FOREIGN KEY (car_id) REFERENCES cars (id) ON DELETE CASCADE
 );`
 
 	// TODO: add foreign key for car_id when that is merged

@@ -52,14 +52,16 @@ var (
 	}
 )
 
-func newRideService(store *mocks.RideStore) *services.RideService {
+func newRideService(store *mocks.RideStore, carService *services.CarService) *services.RideService {
 	logger := mocks.Logger{}
-	return services.NewRideService(store, logger)
+	return services.NewRideService(store, carService, logger)
 }
 
 func TestRideGet(t *testing.T) {
 	store := new(mocks.RideStore)
-	service := newRideService(store)
+	carStore := new(mocks.CarStore)
+	carService := newCarService(carStore)
+	service := newRideService(store, carService)
 	assert := assert.New(t)
 
 	store.On("GetByID", "abc").Return(nil, postgres.ErrNoRideFound)
@@ -82,26 +84,47 @@ func TestRideGet(t *testing.T) {
 
 func TestRideCreate(t *testing.T) {
 	store := new(mocks.RideStore)
-	service := newRideService(store)
+	carStore := new(mocks.CarStore)
+	carService := newCarService(carStore)
+	service := newRideService(store, carService)
 	assert := assert.New(t)
 
 	badRide := ride1
 	badRide.Seats = -4
 
-	validationErr := service.Create(&badRide)
+	user := auth.UserClaims{
+		ID:        badRide.DriverID,
+		Email:     "test@gmail.com",
+		AuthLevel: services.UserLevel,
+	}
+
+	validationErr := service.Create(&badRide, &user)
 	assert.NotNil(validationErr, "There should be a validation error when an invalid car is inserted")
 
 	validRide := ride1
+	user.ID = validRide.DriverID
+	car := models.Car{
+		UserID: user.ID,
+	}
 
 	store.On("Insert", mock.AnythingOfType("*models.Ride")).Return(nil)
+	carStore.On("GetByID", mock.Anything).Return(&car, nil)
 
-	noErr := service.Create(&validRide)
-	assert.Nil(noErr)
+	noErr := service.Create(&validRide, &user)
+	assert.Nil(noErr, "owner should be able to update ride, if car is also owned by user")
+
+	user.ID = "not-right"
+	user.AuthLevel = services.AdminLevel
+
+	noErr = service.Create(&validRide, &user)
+	assert.Nil(noErr, "admin should be able to update any ride")
 }
 
 func TestRideUpdate(t *testing.T) {
 	store := new(mocks.RideStore)
-	service := newRideService(store)
+	carStore := new(mocks.CarStore)
+	carService := newCarService(carStore)
+	service := newRideService(store, carService)
 	assert := assert.New(t)
 
 	validRide := ride1
@@ -133,8 +156,12 @@ func TestRideUpdate(t *testing.T) {
 	assert.Nil(noRide, "there should be no ride when invalid updates")
 	assert.NotNil(validationErr, "should have errored when updates are invalid")
 
-	store.On("GetByID", validRide.ID).Return(&validRide, nil)
+	car := models.Car{
+		UserID: driver.ID,
+	}
+
 	store.On("Update", mock.AnythingOfType("*models.Ride")).Return(nil)
+	store.On("GetByID", validRide.ID).Return(&validRide, nil)
 
 	rideChanges := badRideChanges
 	newSeats = 0
@@ -145,11 +172,22 @@ func TestRideUpdate(t *testing.T) {
 	assert.NotNil(updatedRide, "there should have been an updated ride on valid update")
 	assert.Equal(newSeats, validRide.Seats, "the new ride should have the updated seats")
 	assert.Equal(newPrice, validRide.PricePerSeat, "the new ride should have the updated price per seat")
+
+	store.On("Update", mock.AnythingOfType("*models.Ride")).Return(nil)
+	carStore.On("GetByID", mock.Anything).Return(&car, nil)
+
+	newCarID := "new-one"
+	rideChanges.CarID = &newCarID
+	updatedRide, noErr = service.Update(&rideChanges, validRide.ID, &driver)
+	assert.Nil(noErr, "there should be no error on valid ride update when the user owns the new car")
+	assert.NotNil(updatedRide, "there should have been an updated ride on valid update when the user updates the car id")
 }
 
 func TestRideGetAll(t *testing.T) {
 	store := new(mocks.RideStore)
-	service := newRideService(store)
+	carStore := new(mocks.CarStore)
+	carService := newCarService(carStore)
+	service := newRideService(store, carService)
 	assert := assert.New(t)
 
 	noRides, err := service.GetAll("", 15, services.UserLevel)
@@ -169,7 +207,9 @@ func TestRideGetAll(t *testing.T) {
 
 func TestRideDelete(t *testing.T) {
 	store := new(mocks.RideStore)
-	service := newRideService(store)
+	carStore := new(mocks.CarStore)
+	carService := newCarService(carStore)
+	service := newRideService(store, carService)
 	assert := assert.New(t)
 
 	user := auth.UserClaims{

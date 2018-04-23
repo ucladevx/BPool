@@ -9,8 +9,9 @@ import (
 type (
 	// RideService provides all use cases for rides
 	RideService struct {
-		store  RideStore
-		logger interfaces.Logger
+		store      RideStore
+		carService *CarService
+		logger     interfaces.Logger
 	}
 
 	// RideStore any store that allows for rides to be persisted
@@ -24,17 +25,27 @@ type (
 )
 
 // NewRideService creates a new ride service
-func NewRideService(store RideStore, l interfaces.Logger) *RideService {
+func NewRideService(store RideStore, c *CarService, l interfaces.Logger) *RideService {
 	return &RideService{
-		store:  store,
-		logger: l,
+		store:      store,
+		carService: c,
+		logger:     l,
 	}
 }
 
 // Create persists a ride
-func (r *RideService) Create(ride *models.Ride) error {
+func (r *RideService) Create(ride *models.Ride, user *auth.UserClaims) error {
 	if err := ride.Validate(); err != nil {
 		return err
+	}
+
+	isOwner, err := r.carService.IsOwnerOrAdmin(ride.CarID, user)
+	if err != nil {
+		return err
+	}
+
+	if !isOwner {
+		return ErrNotCarOwner
 	}
 
 	if err := r.store.Insert(ride); err != nil {
@@ -45,6 +56,7 @@ func (r *RideService) Create(ride *models.Ride) error {
 	return nil
 }
 
+// Update attempts to apply updates to a ride
 func (r *RideService) Update(updates *models.RideChangeSet, rideID string, user *auth.UserClaims) (*models.Ride, error) {
 	ride, err := r.store.GetByID(rideID)
 	if err != nil {
@@ -55,10 +67,24 @@ func (r *RideService) Update(updates *models.RideChangeSet, rideID string, user 
 		return nil, ErrForbidden
 	}
 
+	originalCarID := ride.CarID
+
 	err = ride.ApplyUpdates(updates)
 	if err != nil {
 		r.logger.Error("RideService.Update - apply updates", "error", err.Error())
 		return nil, err
+	}
+
+	// Only check if the car is owned by the user if that field gets updated
+	if originalCarID != ride.CarID {
+		isOwner, err := r.carService.IsOwnerOrAdmin(ride.CarID, user)
+		if err != nil {
+			return nil, err
+		}
+
+		if !isOwner {
+			return nil, ErrNotCarOwner
+		}
 	}
 
 	if err = r.store.Update(ride); err != nil {

@@ -15,7 +15,7 @@ import (
 type (
 	// RideService is used to handle the ride use cases
 	RideService interface {
-		Create(ride *models.Ride) error
+		Create(*models.Ride, *auth.UserClaims) error
 		Get(id string) (*models.Ride, error)
 		Update(updates *models.RideChangeSet, rideID string, user *auth.UserClaims) (*models.Ride, error)
 		GetAll(lastID string, limit, userAuthLevel int) ([]*models.Ride, error)
@@ -59,12 +59,14 @@ func (r *RideController) create(c echo.Context) error {
 	}
 
 	user := userClaimsFromContext(c)
-
 	data.DriverID = &user.ID
 
-	ride := models.NewRide(&data)
+	ride, err := models.NewRide(&data)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
-	if err := r.service.Create(ride); err != nil {
+	if err := r.service.Create(ride, user); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
