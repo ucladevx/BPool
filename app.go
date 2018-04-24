@@ -68,14 +68,18 @@ func Start() {
 
 	userStore := postgres.NewUserStore(db)
 	carStore := postgres.NewCarStore(db)
+	rideStore := postgres.NewRideStore(db)
 
-	postgres.CreateTables(userStore, carStore)
+	postgres.CreateTables(userStore, carStore, rideStore)
 
 	userService := services.NewUserService(userStore, tokenizer, logger)
+	carService := services.NewCarService(carStore, logger)
+	rideService := services.NewRideService(rideStore, carService, logger)
+
 	userController := http.NewUserController(userService, int(conf.GetInt("jwt.num_days_valid")), conf.Get("jwt.cookie"), logger)
+	rideController := http.NewRideController(rideService, logger)
 	pagesController := http.NewPagesController(logger)
 
-	carService := services.NewCarService(carStore, logger)
 	carController := http.NewCarController(carService, logger)
 
 	app := echo.New()
@@ -100,10 +104,9 @@ func Start() {
 
 	pagesController.MountRoutes(app.Group(""))
 
-	auth := app.Group("/api/v1")
-
-	userController.MountRoutes(auth)
-	carController.MountRoutes(auth)
+	userController.MountRoutes(app.Group("/api/v1"))
+	rideController.MountRoutes(app.Group("/api/v1"))
+	carController.MountRoutes(app.Group("/api/v1"))
 
 	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")
