@@ -22,7 +22,7 @@ type (
 		ID          string    `json:"id" db:"id"`
 		DriverID    string    `json:"driver_id" db:"driver_id"`
 		PassengerID string    `json:"passenger_id" db:"passenger_id"`
-		RideID      string    `json:"car_id" db:"car_id"`
+		RideID      string    `json:"ride_id" db:"ride_id"`
 		Status      string    `json:"status" db:"status"`
 		CreatedAt   time.Time `json:"created_at" db:"created_at"`
 		UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
@@ -30,9 +30,8 @@ type (
 
 	// PassengerChangeSet is what is allowed to be changed
 	PassengerChangeSet struct {
-		DriverID    *string `json:"driver_id" db:"driver_id"`
 		PassengerID *string `json:"passenger_id" db:"passenger_id"`
-		RideID      *string `json:"car_id" db:"car_id"`
+		RideID      *string `json:"ride_id" db:"ride_id"`
 		Status      *string `json:"status" db:"status"`
 	}
 )
@@ -65,10 +64,6 @@ func (p *Passenger) Validate() error {
 // ApplyUpdates attempts to update the passenger with the given changes
 func (p *Passenger) ApplyUpdates(o *PassengerChangeSet) error {
 	newPassenger := *p
-
-	if o.DriverID != nil {
-		newPassenger.DriverID = *o.DriverID
-	}
 
 	if o.RideID != nil {
 		newPassenger.RideID = *o.RideID

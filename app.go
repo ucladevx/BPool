@@ -81,6 +81,7 @@ func Start() {
 	userService := services.NewUserService(userStore, tokenizer, logger)
 	carService := services.NewCarService(carStore, logger)
 	rideService := services.NewRideService(rideStore, carService, logger)
+	passengerService := services.NewPassengerService(passengerStore, rideService, logger)
 
 	userController := http.NewUserController(
 		userService,
@@ -90,8 +91,8 @@ func Start() {
 	)
 	rideController := http.NewRideController(rideService, logger)
 	pagesController := http.NewPagesController(logger)
-
 	carController := http.NewCarController(carService, logger)
+	passengersController := http.NewPassengerController(passengerService, logger)
 
 	app := echo.New()
 	app.HTTPErrorHandler = handleError(logger)
@@ -118,6 +119,7 @@ func Start() {
 	userController.MountRoutes(app.Group("/api/v1"))
 	rideController.MountRoutes(app.Group("/api/v1"))
 	carController.MountRoutes(app.Group("/api/v1"))
+	passengersController.MountRoutes(app.Group("/api/v1"))
 
 	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")

@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/ucladevx/BPool/models"
+	"github.com/ucladevx/BPool/stores"
 	"github.com/ucladevx/BPool/utils/id"
 )
 
@@ -85,10 +86,48 @@ func (r *PassengerStore) Delete(id string) error {
 	return err
 }
 
-func (r *PassengerStore) getBy(query string, arg interface{}) (*models.Passenger, error) {
+// Count determines the number of records in the db that fit the where clauses
+func (r *PassengerStore) Count(clauses []stores.QueryModifier) (int, error) {
+	where, vals := generateWhereStatement(&clauses)
+
+	query := "SELECT COUNT(*) FROM" + passengerTableName + " " + where
+
+	row := r.db.QueryRow(query, vals...)
+	count := 0
+
+	if err := row.Scan(&row); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+// Where provides a generic query interface to get a single passenger
+func (r *PassengerStore) Where(clauses []stores.QueryModifier) (*models.Passenger, error) {
+	where, vals := generateWhereStatement(&clauses)
+	query := "SELECT * FROM" + passengerTableName + " " + where + " LIMIT 1"
+
+	return r.getBy(query, vals...)
+}
+
+// WhereMany provides a generic query interface to get many passengers
+func (r *PassengerStore) WhereMany(clauses []stores.QueryModifier) ([]*models.Passenger, error) {
+	where, vals := generateWhereStatement(&clauses)
+	query := "SELECT * FROM" + passengerTableName + " " + where
+
+	passengers := []*models.Passenger{}
+
+	if err := r.db.Select(&passengers, query, vals...); err != nil {
+		return nil, err
+	}
+
+	return passengers, nil
+}
+
+func (r *PassengerStore) getBy(query string, arg ...interface{}) (*models.Passenger, error) {
 	passenger := models.Passenger{}
 
-	if err := r.db.Get(&passenger, query, arg); err != nil {
+	if err := r.db.Get(&passenger, query, arg...); err != nil {
 		if err == sql.ErrNoRows {
 			err = ErrNoPassengerFound
 		}
