@@ -96,7 +96,10 @@ func Start() {
 			`"bytes_out":${bytes_out}}` + "\n",
 	}))
 	app.Use(middleware.Gzip())
-	app.Use(middleware.CORS())
+	app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"localhost"},
+		AllowCredentials: true,
+	}))
 	app.Use(middleware.Secure())
 	app.Use(middleware.Recover())
 	app.Use(middleware.RemoveTrailingSlash())
