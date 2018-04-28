@@ -12,6 +12,9 @@ import (
 var (
 	// ErrNoMoreSeats occurs when a ride is already full
 	ErrNoMoreSeats = errors.New("There are no more seats available")
+
+	// ErrPassengerIsDriver is returned when a driver tries to be a passenger in own ride
+	ErrPassengerIsDriver = errors.New("You cannot join your own ride")
 )
 
 type (
@@ -57,8 +60,15 @@ func (p *PassengerService) Create(passenger *models.Passenger, user *auth.UserCl
 	}
 
 	// check if ride exists
-	if _, err := p.rideService.Get(passenger.RideID); err != nil {
+	ride, err := p.rideService.Get(passenger.RideID)
+	if err != nil {
 		return err
+	}
+
+	passenger.DriverID = ride.DriverID
+
+	if passenger.DriverID == user.ID {
+		return ErrPassengerIsDriver
 	}
 
 	if err := p.store.Insert(passenger); err != nil {
@@ -94,7 +104,7 @@ func (p *PassengerService) Update(updates *models.PassengerChangeSet, passengerI
 			stores.QueryMod("status", stores.EQ, models.PassengerAccepted),
 		}
 
-		// TODO: probably try to get count and ride in parallel
+		// NOTE: probably try to get count and ride in parallel
 		alreadyAccepted, err := p.store.Count(clauses)
 		if err != nil {
 			return nil, err
@@ -119,8 +129,18 @@ func (p *PassengerService) Update(updates *models.PassengerChangeSet, passengerI
 }
 
 // Get returns a ride by ID
-func (p *PassengerService) Get(id string) (*models.Passenger, error) {
-	return p.store.GetByID(id)
+func (p *PassengerService) Get(id string, user *auth.UserClaims) (*models.Passenger, error) {
+	passenger, err := p.store.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// only allow driver, passenger, or admin to view the ride
+	if passenger.DriverID != user.ID && passenger.PassengerID != user.ID && user.AuthLevel != AdminLevel {
+		return nil, ErrForbidden
+	}
+
+	return passenger, nil
 }
 
 // GetAll returns a page of rides
@@ -143,15 +163,15 @@ func (p *PassengerService) GetAllByCarID(carID string) ([]*models.Passenger, err
 
 // Delete removes a ride from the store if the user is allowed to
 func (p *PassengerService) Delete(id string, user *auth.UserClaims) error {
-	ride, err := p.store.GetByID(id)
+	passenger, err := p.store.GetByID(id)
 	if err != nil {
 		p.logger.Error("PassengerService.Delete", "error", err.Error())
 		return err
 	}
 
-	if user.AuthLevel != AdminLevel && ride.DriverID != user.ID {
+	if user.AuthLevel != AdminLevel && passenger.DriverID != user.ID {
 		return ErrForbidden
 	}
 
-	return p.store.Delete(ride.ID)
+	return p.store.Delete(passenger.ID)
 }

@@ -30,9 +30,9 @@ type (
 
 	// PassengerChangeSet is what is allowed to be changed
 	PassengerChangeSet struct {
-		PassengerID *string `json:"passenger_id" db:"passenger_id"`
-		RideID      *string `json:"ride_id" db:"ride_id"`
-		Status      *string `json:"status" db:"status"`
+		PassengerID *string `json:"passenger_id"`
+		RideID      *string `json:"ride_id"`
+		Status      *string `json:"status"`
 	}
 )
 
@@ -54,7 +54,6 @@ func (p *Passenger) String() string {
 // Validate validates the passenger
 func (p *Passenger) Validate() error {
 	return validation.ValidateStruct(p,
-		validation.Field(&p.DriverID, validation.Required),
 		validation.Field(&p.RideID, validation.Required),
 		validation.Field(&p.PassengerID, validation.Required),
 		validation.Field(&p.Status, validation.Required, validation.In(PassengerAccepted, PassengerInterested, PassengerRejected)),

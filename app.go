@@ -89,7 +89,7 @@ func Start() {
 		conf.Get("jwt.cookie"),
 		logger,
 	)
-	rideController := http.NewRideController(rideService, logger)
+	rideController := http.NewRideController(rideService, passengerService, logger)
 	pagesController := http.NewPagesController(logger)
 	carController := http.NewCarController(carService, logger)
 	passengersController := http.NewPassengerController(passengerService, logger)

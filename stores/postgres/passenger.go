@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/ucladevx/BPool/models"
 	"github.com/ucladevx/BPool/stores"
@@ -14,6 +15,9 @@ import (
 var (
 	// ErrNoPassengerFound error when no passenger in db
 	ErrNoPassengerFound = errors.New("no passenger found")
+
+	// ErrAlreadyPassenger occurs when a user has already shown interest
+	ErrAlreadyPassenger = errors.New("user is already a passenger")
 )
 
 // PassengerStore persits rides in a pg DB
@@ -55,10 +59,15 @@ func (r *PassengerStore) Insert(passenger *models.Passenger) error {
 		passenger.DriverID,
 		passenger.PassengerID,
 		passenger.RideID,
-		passenger.PassengerID,
+		passenger.Status,
 	)
 
 	if err := row.Scan(&passenger.CreatedAt, &passenger.UpdatedAt); err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code.Name() == "unique_violation" {
+				return ErrAlreadyPassenger
+			}
+		}
 		return err
 	}
 

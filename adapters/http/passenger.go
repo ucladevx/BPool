@@ -16,7 +16,7 @@ type (
 	// PassengerService is used to handle the passenger use cases
 	PassengerService interface {
 		Create(*models.Passenger, *auth.UserClaims) error
-		Get(id string) (*models.Passenger, error)
+		Get(id string, user *auth.UserClaims) (*models.Passenger, error)
 		Update(updates *models.PassengerChangeSet, passengerID string, user *auth.UserClaims) (*models.Passenger, error)
 		GetAll(lastID string, limit, userAuthLevel int) ([]*models.Passenger, error)
 		GetAllByCarID(carID string) ([]*models.Passenger, error)
@@ -61,6 +61,8 @@ func (p *PassengerController) create(c echo.Context) error {
 
 	user := userClaimsFromContext(c)
 	data.PassengerID = &user.ID
+	status := models.PassengerInterested
+	data.Status = &status
 
 	passenger, err := models.NewPassenger(&data)
 	if err != nil {
@@ -107,8 +109,9 @@ func (p *PassengerController) list(c echo.Context) error {
 
 func (p *PassengerController) show(c echo.Context) error {
 	id := c.Param("id")
+	user := userClaimsFromContext(c)
 
-	passenger, err := p.service.Get(id)
+	passenger, err := p.service.Get(id, user)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -133,7 +136,6 @@ func (p *PassengerController) update(c echo.Context) error {
 	}
 
 	// only allow status updates
-	data.DriverID = nil
 	data.RideID = nil
 	data.PassengerID = nil
 
