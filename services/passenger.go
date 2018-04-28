@@ -9,6 +9,10 @@ import (
 	"github.com/ucladevx/BPool/utils/auth"
 )
 
+const (
+	getAllPassengerDefaultLimit = 15
+)
+
 var (
 	// ErrNoMoreSeats occurs when a ride is already full
 	ErrNoMoreSeats = errors.New("There are no more seats available")
@@ -150,7 +154,7 @@ func (p *PassengerService) GetAll(lastID string, limit, userAuthLevel int) ([]*m
 	}
 
 	if limit <= 0 || limit > 100 {
-		limit = 15
+		limit = getAllPassengerDefaultLimit
 	}
 
 	return p.store.GetAll(lastID, limit)
@@ -161,7 +165,7 @@ func (p *PassengerService) GetAllByCarID(carID string) ([]*models.Passenger, err
 	return p.store.WhereMany([]stores.QueryModifier{stores.QueryMod("car_id", stores.EQ, carID)})
 }
 
-// Delete removes a ride from the store if the user is allowed to
+// Delete removes a passenger from the store if the user is allowed to
 func (p *PassengerService) Delete(id string, user *auth.UserClaims) error {
 	passenger, err := p.store.GetByID(id)
 	if err != nil {

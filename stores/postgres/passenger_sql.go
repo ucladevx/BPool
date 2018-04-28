@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS passengers (
 	passengerGetByIDSQL = "SELECT * FROM passengers WHERE id=$1"
 
 	passengerInsertSQL = "INSERT INTO passengers (id, driver_id, passenger_id, ride_id, status) VALUES ($1, $2, $3, $4, $5) RETURNING created_at, updated_at"
-	passengerUpdateSQL = "UPDATE passengers SET status=$1 updated_at=NOW() WHERE id=$12 RETURNING updated_at"
+	passengerUpdateSQL = "UPDATE passengers SET status=$1 updated_at=NOW() WHERE id=$2 RETURNING updated_at"
 
 	passengerDeleteSQL = "DELETE FROM passengers WHERE id=$1"
 )
