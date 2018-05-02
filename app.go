@@ -97,7 +97,7 @@ func Start() {
 	}))
 	app.Use(middleware.Gzip())
 	app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"localhost"},
+		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowCredentials: true,
 	}))
 	app.Use(middleware.Secure())
