@@ -14,6 +14,7 @@ type (
 		DriverID     string    `json:"driver_id" db:"driver_id"`
 		CarID        string    `json:"car_id" db:"car_id"`
 		Seats        int       `json:"seats" db:"seats"`
+		SeatsTaken   *int      `json:"seats_taken,omitempty" db:"seats_taken"`
 		StartCity    string    `json:"start_city" db:"start_city"`
 		EndCity      string    `json:"end_city" db:"end_city"`
 		StartLat     float64   `json:"start_dest_lat" db:"start_dest_lat"`

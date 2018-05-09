@@ -160,9 +160,17 @@ func (p *PassengerService) GetAll(lastID string, limit, userAuthLevel int) ([]*m
 	return p.store.GetAll(lastID, limit)
 }
 
-// GetAllByCarID returns all passengers in all statuses for a given car
-func (p *PassengerService) GetAllByCarID(carID string) ([]*models.Passenger, error) {
-	return p.store.WhereMany([]stores.QueryModifier{stores.QueryMod("car_id", stores.EQ, carID)})
+// GetAllByRideID returns all passengers in all statuses for a given ride
+func (p *PassengerService) GetAllByRideID(rideID string, user *auth.UserClaims) ([]*models.Passenger, error) {
+	if ride, err := p.rideService.Get(rideID); err != nil || (user.AuthLevel != AdminLevel && ride.DriverID != user.ID) {
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, ErrForbidden
+	}
+
+	return p.store.WhereMany([]stores.QueryModifier{stores.QueryMod("ride_id", stores.EQ, rideID)})
 }
 
 // Delete removes a passenger from the store if the user is allowed to
