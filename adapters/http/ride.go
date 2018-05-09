@@ -24,16 +24,18 @@ type (
 
 	// RideController http adapter
 	RideController struct {
-		logger  interfaces.Logger
-		service RideService
+		logger           interfaces.Logger
+		service          RideService
+		passengerService PassengerService
 	}
 )
 
 // NewRideController creates a new auth controller
-func NewRideController(r RideService, l interfaces.Logger) *RideController {
+func NewRideController(r RideService, p PassengerService, l interfaces.Logger) *RideController {
 	return &RideController{
-		logger:  l,
-		service: r,
+		logger:           l,
+		service:          r,
+		passengerService: p,
 	}
 }
 

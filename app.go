@@ -69,18 +69,30 @@ func Start() {
 	userStore := postgres.NewUserStore(db)
 	carStore := postgres.NewCarStore(db)
 	rideStore := postgres.NewRideStore(db)
+	passengerStore := postgres.NewPassengerStore(db)
 
-	postgres.CreateTables(userStore, carStore, rideStore)
+	postgres.CreateTables(
+		userStore,
+		carStore,
+		rideStore,
+		passengerStore,
+	)
 
 	userService := services.NewUserService(userStore, tokenizer, logger)
 	carService := services.NewCarService(carStore, logger)
 	rideService := services.NewRideService(rideStore, carService, logger)
+	passengerService := services.NewPassengerService(passengerStore, rideService, logger)
 
-	userController := http.NewUserController(userService, int(conf.GetInt("jwt.num_days_valid")), conf.Get("jwt.cookie"), logger)
-	rideController := http.NewRideController(rideService, logger)
+	userController := http.NewUserController(
+		userService,
+		int(conf.GetInt("jwt.num_days_valid")),
+		conf.Get("jwt.cookie"),
+		logger,
+	)
+	rideController := http.NewRideController(rideService, passengerService, logger)
 	pagesController := http.NewPagesController(logger)
-
 	carController := http.NewCarController(carService, logger)
+	passengersController := http.NewPassengerController(passengerService, logger)
 
 	app := echo.New()
 	app.HTTPErrorHandler = handleError(logger)
@@ -110,6 +122,7 @@ func Start() {
 	userController.MountRoutes(app.Group("/api/v1"))
 	rideController.MountRoutes(app.Group("/api/v1"))
 	carController.MountRoutes(app.Group("/api/v1"))
+	passengersController.MountRoutes(app.Group("/api/v1"))
 
 	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")

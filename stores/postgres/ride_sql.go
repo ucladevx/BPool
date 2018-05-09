@@ -25,8 +25,6 @@ CREATE TABLE IF NOT EXISTS rides (
 	FOREIGN KEY (car_id) REFERENCES cars (id) ON DELETE CASCADE
 );`
 
-	// TODO: add foreign key for car_id when that is merged
-
 	rideGetAllSQL = "SELECT * FROM rides WHERE id > $1 LIMIT $2"
 
 	rideGetByIDSQL = "SELECT * FROM rides WHERE id=$1"
