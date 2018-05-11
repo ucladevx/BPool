@@ -99,7 +99,7 @@ func (r *PassengerStore) Delete(id string) error {
 func (r *PassengerStore) Count(clauses []stores.QueryModifier) (int, error) {
 	where, vals := generateWhereStatement(&clauses)
 
-	query := "SELECT COUNT(*) FROM" + passengerTableName + " " + where
+	query := "SELECT COUNT(*) FROM " + passengerTableName + " " + where
 
 	row := r.db.QueryRow(query, vals...)
 	count := 0
@@ -114,7 +114,7 @@ func (r *PassengerStore) Count(clauses []stores.QueryModifier) (int, error) {
 // Where provides a generic query interface to get a single passenger
 func (r *PassengerStore) Where(clauses []stores.QueryModifier) (*models.Passenger, error) {
 	where, vals := generateWhereStatement(&clauses)
-	query := "SELECT * FROM" + passengerTableName + " " + where + " LIMIT 1"
+	query := "SELECT * FROM " + passengerTableName + " " + where + " LIMIT 1"
 
 	return r.getBy(query, vals...)
 }
@@ -122,7 +122,7 @@ func (r *PassengerStore) Where(clauses []stores.QueryModifier) (*models.Passenge
 // WhereMany provides a generic query interface to get many passengers
 func (r *PassengerStore) WhereMany(clauses []stores.QueryModifier) ([]*models.Passenger, error) {
 	where, vals := generateWhereStatement(&clauses)
-	query := "SELECT * FROM" + passengerTableName + " " + where
+	query := "SELECT * FROM " + passengerTableName + " " + where
 
 	passengers := []*models.Passenger{}
 

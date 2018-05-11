@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS rides (
 
 	rideGetAllSQL = "SELECT * FROM rides WHERE id > $1 LIMIT $2"
 
-	rideGetByIDSQL = "SELECT * FROM rides WHERE id=$1"
+	rideGetByIDSQL = "SELECT *, (SELECT COUNT(*) FROM passengers WHERE ride_id=$1 AND status='accepted') AS seats_taken FROM rides WHERE rides.id=$1;"
 
 	rideInsertSQL = "INSERT INTO rides (id, driver_id, car_id, seats, start_city, end_city, start_dest_lat, start_dest_lon, end_dest_lat, end_dest_lon, price_per_seat, info, start_date) " +
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING created_at, updated_at"

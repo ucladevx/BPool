@@ -19,7 +19,7 @@ type (
 		Get(id string, user *auth.UserClaims) (*models.Passenger, error)
 		Update(updates *models.PassengerChangeSet, passengerID string, user *auth.UserClaims) (*models.Passenger, error)
 		GetAll(lastID string, limit, userAuthLevel int) ([]*models.Passenger, error)
-		GetAllByCarID(carID string) ([]*models.Passenger, error)
+		GetAllByRideID(rideID string, user *auth.UserClaims) ([]*models.Passenger, error)
 		Delete(id string, user *auth.UserClaims) error
 	}
 

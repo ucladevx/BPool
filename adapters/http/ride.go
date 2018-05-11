@@ -44,6 +44,7 @@ func (r *RideController) MountRoutes(c *echo.Group) {
 	c.GET("/rides", r.list, auth.NewAuthMiddleware(services.AdminLevel, r.logger))
 	c.GET("/rides/:id", r.show)
 	c.Use(auth.NewAuthMiddleware(services.UserLevel, r.logger))
+	c.GET("/rides/:id/passengers", r.listPassengers)
 	c.POST("/rides", r.create)
 	c.DELETE("/rides/:id", r.delete)
 	c.PUT("/rides/:id", r.update)
@@ -116,6 +117,25 @@ func (r *RideController) show(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"data": ride,
+	})
+}
+
+func (r *RideController) listPassengers(c echo.Context) error {
+	id := c.Param("id")
+	user := userClaimsFromContext(c)
+
+	passengers, err := r.passengerService.GetAllByRideID(id, user)
+	if err != nil {
+		status := http.StatusNotFound
+		if err == services.ErrForbidden {
+			status = http.StatusForbidden
+		}
+
+		return echo.NewHTTPError(status, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"data": passengers,
 	})
 }
 
