@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/ucladevx/BPool/interfaces"
 	"github.com/ucladevx/BPool/models"
+	"github.com/ucladevx/BPool/stores"
 	"github.com/ucladevx/BPool/utils/auth"
 )
 
@@ -17,6 +18,8 @@ type (
 	// RideStore any store that allows for rides to be persisted
 	RideStore interface {
 		GetAll(lastID string, limit int) ([]*models.Ride, error)
+		GetAllWherePassenger(passengerID string) ([]*models.Ride, error)
+		WhereMany(clauses []stores.QueryModifier) ([]*models.Ride, error)
 		GetByID(id string) (*models.Ride, error)
 		Insert(ride *models.Ride) error
 		Delete(id string) error
