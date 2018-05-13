@@ -42,5 +42,6 @@ func (f *FeedService) GetUserRides(userID string) ([]*models.Ride, error) {
 
 	// Sort rides by descending start time
 	sort.Slice(allRides, func(i, j int) bool { return allRides[j].StartDate.Before(allRides[i].StartDate) })
+
 	return allRides, nil
 }
