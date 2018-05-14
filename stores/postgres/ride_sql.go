@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS rides (
 	FOREIGN KEY (car_id) REFERENCES cars (id) ON DELETE CASCADE
 );`
 
+	rideGetAllWherePassenger = "SELECT rides.*, passengers.status AS passenger_status FROM passengers JOIN rides ON rides.id = ride_id WHERE passenger_id =$1"
+
 	rideGetAllSQL = "SELECT * FROM rides WHERE id > $1 LIMIT $2"
 
 	rideGetByIDSQL = "SELECT *, (SELECT COUNT(*) FROM passengers WHERE ride_id=$1 AND status='accepted') AS seats_taken FROM rides WHERE rides.id=$1;"

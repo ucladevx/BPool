@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/ucladevx/BPool/models"
+	"github.com/ucladevx/BPool/stores"
 	"github.com/ucladevx/BPool/utils/id"
 )
 
@@ -34,6 +35,31 @@ func (r *RideStore) GetAll(lastID string, limit int) ([]*models.Ride, error) {
 	rides := []*models.Ride{}
 
 	if err := r.db.Select(&rides, rideGetAllSQL, lastID, limit); err != nil {
+		return nil, err
+	}
+
+	return rides, nil
+}
+
+// GetAllWherePassenger returns all rides that the user passed is a passenger
+func (r *RideStore) GetAllWherePassenger(passengerID string) ([]*models.Ride, error) {
+	rides := []*models.Ride{}
+
+	if err := r.db.Select(&rides, rideGetAllWherePassenger, passengerID); err != nil {
+		return nil, err
+	}
+
+	return rides, nil
+}
+
+// WhereMany provides a generic query interface to get many rides
+func (r *RideStore) WhereMany(clauses []stores.QueryModifier) ([]*models.Ride, error) {
+	where, vals := generateWhereStatement(&clauses)
+	query := "SELECT * FROM " + rideTableName + " " + where
+
+	rides := []*models.Ride{}
+
+	if err := r.db.Select(&rides, query, vals...); err != nil {
 		return nil, err
 	}
 

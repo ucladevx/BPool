@@ -10,22 +10,23 @@ import (
 type (
 	// Ride is a ride entity
 	Ride struct {
-		ID           string    `json:"id" db:"id"`
-		DriverID     string    `json:"driver_id" db:"driver_id"`
-		CarID        string    `json:"car_id" db:"car_id"`
-		Seats        int       `json:"seats" db:"seats"`
-		SeatsTaken   *int      `json:"seats_taken,omitempty" db:"seats_taken"`
-		StartCity    string    `json:"start_city" db:"start_city"`
-		EndCity      string    `json:"end_city" db:"end_city"`
-		StartLat     float64   `json:"start_dest_lat" db:"start_dest_lat"`
-		StartLon     float64   `json:"start_dest_lon" db:"start_dest_lon"`
-		EndLat       float64   `json:"end_dest_lat" db:"end_dest_lat"`
-		EndLon       float64   `json:"end_dest_lon" db:"end_dest_lon"`
-		PricePerSeat float64   `json:"price_per_seat" db:"price_per_seat"`
-		Info         string    `json:"info" db:"info"`
-		StartDate    time.Time `json:"start_date" db:"start_date"`
-		CreatedAt    time.Time `json:"created_at" db:"created_at"`
-		UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+		ID              string    `json:"id" db:"id"`
+		DriverID        string    `json:"driver_id" db:"driver_id"`
+		CarID           string    `json:"car_id" db:"car_id"`
+		Seats           int       `json:"seats" db:"seats"`
+		SeatsTaken      *int      `json:"seats_taken,omitempty" db:"seats_taken"` //extra detail field
+		StartCity       string    `json:"start_city" db:"start_city"`
+		EndCity         string    `json:"end_city" db:"end_city"`
+		StartLat        float64   `json:"start_dest_lat" db:"start_dest_lat"`
+		StartLon        float64   `json:"start_dest_lon" db:"start_dest_lon"`
+		EndLat          float64   `json:"end_dest_lat" db:"end_dest_lat"`
+		EndLon          float64   `json:"end_dest_lon" db:"end_dest_lon"`
+		PricePerSeat    float64   `json:"price_per_seat" db:"price_per_seat"`
+		Info            string    `json:"info" db:"info"`
+		PassengerStatus *string   `json:"passenger_status,omitempty" db:"passenger_status"` // extra detail field
+		StartDate       time.Time `json:"start_date" db:"start_date"`
+		CreatedAt       time.Time `json:"created_at" db:"created_at"`
+		UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
 	}
 
 	// RideChangeSet is the fields that are modifiable in the ride
