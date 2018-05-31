@@ -70,12 +70,14 @@ func Start() {
 	carStore := postgres.NewCarStore(db)
 	rideStore := postgres.NewRideStore(db)
 	passengerStore := postgres.NewPassengerStore(db)
+	ratingStore := postgres.NewRatingStore(db)
 
 	postgres.CreateTables(
 		userStore,
 		carStore,
 		rideStore,
 		passengerStore,
+		ratingStore,
 	)
 
 	userService := services.NewUserService(userStore, tokenizer, logger)
@@ -83,6 +85,7 @@ func Start() {
 	rideService := services.NewRideService(rideStore, carService, logger)
 	passengerService := services.NewPassengerService(passengerStore, rideService, logger)
 	feedService := services.NewFeedService(rideStore, logger)
+	ratingService := services.NewRatingService(ratingStore, passengerService, logger)
 
 	userController := http.NewUserController(
 		userService,
@@ -95,6 +98,7 @@ func Start() {
 	carController := http.NewCarController(carService, logger)
 	passengersController := http.NewPassengerController(passengerService, logger)
 	feedController := http.NewFeedController(feedService, logger)
+	ratingController := http.NewRatingController(ratingService, passengerService, logger)
 
 	app := echo.New()
 	app.HTTPErrorHandler = handleError(logger)
@@ -126,6 +130,7 @@ func Start() {
 	carController.MountRoutes(app.Group("/api/v1"))
 	passengersController.MountRoutes(app.Group("/api/v1"))
 	feedController.MountRoutes(app.Group("/api/v1"))
+	ratingController.MountRoutes(app.Group("/api/v1"))
 
 	logger.Info("CONFIG", "env", env)
 	port := ":" + conf.Get("port")
